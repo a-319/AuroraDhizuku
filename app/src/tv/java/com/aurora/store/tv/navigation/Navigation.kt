@@ -10,11 +10,14 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.aurora.store.AuroraApp
+import com.aurora.store.data.event.AuthEvent
 import com.aurora.store.tv.ui.details.AppDetailsScreen
 import com.aurora.store.tv.ui.home.HomeScreen
 import com.aurora.store.tv.ui.login.LoginScreen
@@ -27,6 +30,18 @@ import com.aurora.store.tv.ui.onboarding.OnboardingScreen
 @Composable
 fun Navigation(startDestination: Screen) {
     val backStack = rememberNavBackStack(startDestination)
+
+    // Send the user back to Login whenever a ViewModel reports the saved Play token was rejected
+    // (e.g. a 401 while loading app details). Login doubles as the splash: it re-validates against
+    // Play and rebuilds the auth bundle, then auto-advances to Home. Mirrors the phone NavDisplay.
+    LaunchedEffect(Unit) {
+        AuroraApp.events.authEvent.collect { event ->
+            if (event is AuthEvent.SessionExpired) {
+                backStack.clear()
+                backStack.add(Screen.Login)
+            }
+        }
+    }
 
     NavDisplay(
         onBack = { backStack.removeLastOrNull() },

@@ -8,7 +8,6 @@ package com.aurora.store.tv
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.fragment.app.FragmentActivity
-import com.aurora.store.data.providers.AccountProvider
 import com.aurora.store.data.receiver.MigrationReceiver
 import com.aurora.store.tv.navigation.Navigation
 import com.aurora.store.tv.navigation.resolveStartDestination
@@ -24,10 +23,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
 
         val introCompleted = Preferences.getBoolean(this, Preferences.PREFERENCE_INTRO)
-        val startDestination = resolveStartDestination(
-            introCompleted = introCompleted,
-            isLoggedIn = AccountProvider.isLoggedIn(this)
-        )
+        val startDestination = resolveStartDestination(introCompleted = introCompleted)
 
         setContent {
             Theme {
