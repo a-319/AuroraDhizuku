@@ -55,7 +55,9 @@ class AppInstaller @Inject constructor(
     private val serviceInstaller: ServiceInstaller,
     private val amInstaller: AMInstaller,
     private val shizukuInstaller: ShizukuInstaller,
-    private val microGInstaller: MicroGInstaller
+    private val microGInstaller: MicroGInstaller,
+    private val deviceOwnerInstaller: DeviceOwnerInstaller,
+    private val dhizukuInstaller: DhizukuInstaller
 ) {
 
     companion object {
@@ -72,15 +74,24 @@ class AppInstaller @Inject constructor(
         fun getCurrentInstaller(context: Context): Installer =
             Installer.entries[Preferences.getInteger(context, PREFERENCE_INSTALLER_ID)]
 
-        fun getAvailableInstallersInfo(context: Context): List<InstallerInfo> = listOfNotNull(
-            SessionInstaller.installerInfo,
-            NativeInstaller.installerInfo,
-            if (hasRootAccess()) RootInstaller.installerInfo else null,
-            if (hasAuroraService(context)) ServiceInstaller.installerInfo else null,
-            if (hasAppManager(context)) AMInstaller.installerInfo else null,
-            if (hasShizukuOrSui(context)) ShizukuInstaller.installerInfo else null,
-            if (hasMicroGCompanion(context)) MicroGInstaller.installerInfo else null
-        )
+        fun isDeviceOwner(context: Context): Boolean = DeviceOwnerInstaller.isDeviceOwner(context)
+
+        fun getAvailableInstallersInfo(context: Context): List<InstallerInfo> {
+            // When device owner, return ONLY device owner installer
+            if (isDeviceOwner(context)) {
+                return listOf(DeviceOwnerInstaller.installerInfo)
+            }
+            return listOfNotNull(
+                SessionInstaller.installerInfo,
+                NativeInstaller.installerInfo,
+                if (hasRootAccess()) RootInstaller.installerInfo else null,
+                if (hasAuroraService(context)) ServiceInstaller.installerInfo else null,
+                if (hasAppManager(context)) AMInstaller.installerInfo else null,
+                if (hasShizukuOrSui(context)) ShizukuInstaller.installerInfo else null,
+                if (hasMicroGCompanion(context)) MicroGInstaller.installerInfo else null,
+                DhizukuInstaller.installerInfo
+            )
+        }
 
         /**
          * Checks if the given package can be silently installed
@@ -88,6 +99,9 @@ class AppInstaller @Inject constructor(
          * @param packageName Package to silently install
          */
         fun canInstallSilently(context: Context, packageName: String, targetSdk: Int): Boolean {
+            // Device owner can always install silently
+            if (isDeviceOwner(context)) return true
+
             return when (getCurrentInstaller(context)) {
                 Installer.SESSION -> {
                     // Silent install cannot be done on initial install and below A12
@@ -133,6 +147,10 @@ class AppInstaller @Inject constructor(
                 Installer.SHIZUKU -> isOAndAbove && hasShizukuOrSui(context) && hasShizukuPerm()
 
                 Installer.MICROG -> false
+
+                Installer.DEVICE_OWNER -> isDeviceOwner(context)
+
+                Installer.DHIZUKU -> isOAndAbove
             }
         }
 
@@ -181,31 +199,46 @@ class AppInstaller @Inject constructor(
 
     fun getMicroGInstaller(): IInstaller = microGInstaller
 
-    fun getPreferredInstaller(): IInstaller = when (getCurrentInstaller(context)) {
-        Installer.SESSION -> sessionInstaller
-
-        Installer.NATIVE -> nativeInstaller
-
-        Installer.ROOT -> if (hasRootAccess()) rootInstaller else defaultInstaller
-
-        Installer.SERVICE -> if (hasAuroraService(context)) {
-            serviceInstaller
-        } else {
-            defaultInstaller
+    fun getPreferredInstaller(): IInstaller {
+        // Device owner always uses device owner installer
+        if (isDeviceOwner(context)) {
+            return deviceOwnerInstaller
         }
 
-        Installer.AM -> if (hasAppManager(context)) amInstaller else defaultInstaller
+        return when (getCurrentInstaller(context)) {
+            Installer.SESSION -> sessionInstaller
 
-        Installer.SHIZUKU -> if (hasShizukuOrSui(context) && hasShizukuPerm()) {
-            shizukuInstaller
-        } else {
-            defaultInstaller
-        }
+            Installer.NATIVE -> nativeInstaller
 
-        Installer.MICROG -> if (hasMicroGCompanion(context)) {
-            microGInstaller
-        } else {
-            defaultInstaller
+            Installer.ROOT -> if (hasRootAccess()) rootInstaller else defaultInstaller
+
+            Installer.SERVICE -> if (hasAuroraService(context)) {
+                serviceInstaller
+            } else {
+                defaultInstaller
+            }
+
+            Installer.AM -> if (hasAppManager(context)) amInstaller else defaultInstaller
+
+            Installer.SHIZUKU -> if (hasShizukuOrSui(context) && hasShizukuPerm()) {
+                shizukuInstaller
+            } else {
+                defaultInstaller
+            }
+
+            Installer.MICROG -> if (hasMicroGCompanion(context)) {
+                microGInstaller
+            } else {
+                defaultInstaller
+            }
+
+            Installer.DEVICE_OWNER -> if (isDeviceOwner(context)) {
+                deviceOwnerInstaller
+            } else {
+                defaultInstaller
+            }
+
+            Installer.DHIZUKU -> dhizukuInstaller
         }
     }
 }

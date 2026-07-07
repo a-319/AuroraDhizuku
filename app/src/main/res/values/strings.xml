@@ -396,6 +396,14 @@
     <string name="am_installer_desc">Requires App Manager, need adb/root mode to install when miui optimization is on</string>
     <string name="shizuku_installer_subtitle">Using system APIs directly with adb/root privileges</string>
     <string name="shizuku_installer_desc">Requires Shizuku or Sui, needs to be setup and permission granted</string>
+    <string name="pref_install_mode_device_owner">Device Owner</string>
+    <string name="device_owner_installer_subtitle">Silent installation via device owner</string>
+    <string name="device_owner_installer_desc">When Aurora Store is set as device owner, apps are installed silently without user prompts.</string>
+    <string name="installer_device_owner_unavailable">Aurora Store is not set as device owner</string>
+    <string name="pref_install_mode_dhizuku">Dhizuku installer</string>
+    <string name="dhizuku_installer_subtitle">Silent installation via shared device owner</string>
+    <string name="dhizuku_installer_desc">Requires Dhizuku app with device owner permissions granted to Aurora Store</string>
+    <string name="installer_dhizuku_unavailable">Dhizuku is not available or permission not granted</string>
 
     <!-- ManualDownloadSheet -->
     <string name="manual_download_hint">Enter version code you wish to download</string>
@@ -552,4 +560,6 @@
     <!-- Misc -->
     <string name="loading">Loading in progress</string>
     <string name="page">Page <xliff:g id="number">%1$d</xliff:g></string>
+    <string name="managed_hide_screenshots_title">Hide app screenshots section</string>
+    <string name="managed_hide_screenshots_desc">When enabled, screenshot previews are hidden from app details pages.</string>
 </resources>

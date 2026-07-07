@@ -130,6 +130,21 @@ class InstallerViewModel @Inject constructor(
                     }
                 }
 
+                Installer.DEVICE_OWNER -> {
+                    if (!AppInstaller.isDeviceOwner(context)) {
+                        Log.e(
+                            TAG,
+                            "Trying to set device owner installer without being device owner"
+                        )
+                        _error.emit(context.getString(R.string.installer_device_owner_unavailable))
+                        return@launch
+                    }
+                }
+
+                Installer.DHIZUKU -> {
+                    Log.i(TAG, "Setting Dhizuku installer without availability pre-check")
+                }
+
                 else -> Log.i(TAG, "Trying to set ${installer.name} installer without any checks")
             }
 

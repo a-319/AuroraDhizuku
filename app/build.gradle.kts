@@ -241,6 +241,9 @@ dependencies {
     implementation(libs.rikka.shizuku.api)
     implementation(libs.rikka.shizuku.provider)
 
+    // Dhizuku
+    implementation(libs.dhizuku.api)
+
     implementation(libs.lsposed.hiddenapibypass)
 
     // Test
