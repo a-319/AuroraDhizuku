@@ -78,7 +78,7 @@ android {
                 keyAlias = properties["KEY_ALIAS"] as String
                 keyPassword = properties["KEY_PASSWORD"] as String
                 storeFile = file(properties["STORE_FILE"] as String)
-                storePassword = properties["KEY_PASSWORD"] as String
+                storePassword = (properties["STORE_PASSWORD"] ?: properties["KEY_PASSWORD"]) as String
             }
         }
         create("aosp") {

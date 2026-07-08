@@ -27,6 +27,22 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # שחזור ה-keystore ופרטי החתימה מ-GitHub Secrets
+      - name: Decode keystore and create signing.properties
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$GITHUB_WORKSPACE/release.keystore"
+          cat > "$GITHUB_WORKSPACE/signing.properties" <<EOF
+          STORE_FILE=$GITHUB_WORKSPACE/release.keystore
+          KEY_ALIAS=$KEY_ALIAS
+          KEY_PASSWORD=$KEY_PASSWORD
+          STORE_PASSWORD=$STORE_PASSWORD
+          EOF
+
       # פקודת הבנייה שכבר גילינו שעובדת
       - name: Build Vanilla Release APK
         run: ./gradlew assembleVanillaRelease
