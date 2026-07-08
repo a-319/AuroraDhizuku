@@ -60,6 +60,7 @@ sealed class AppState {
     data object Archived : AppState()
     data object Updatable : AppState()
     data object Unavailable : AppState()
+    data object NotWhitelisted : AppState()
     data object Loading : AppState()
 
     /**

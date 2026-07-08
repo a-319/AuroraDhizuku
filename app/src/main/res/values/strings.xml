@@ -102,6 +102,7 @@
     <string name="action_update">"Update"</string>
     <string name="action_update_all">"Update all"</string>
     <string name="action_whitelist">"Whitelist"</string>
+    <string name="action_request_approval">"Request approval"</string>
     <string name="details_beta">"Beta program"</string>
     <string name="details_beta_subscribed">"You're a beta tester"</string>
     <string name="details_beta_available">"Join beta program?"</string>
@@ -562,4 +563,8 @@
     <string name="page">Page <xliff:g id="number">%1$d</xliff:g></string>
     <string name="managed_hide_screenshots_title">Hide app screenshots section</string>
     <string name="managed_hide_screenshots_desc">When enabled, screenshot previews are hidden from app details pages.</string>
+    <string name="managed_whitelist_url_title">App whitelist URL</string>
+    <string name="managed_whitelist_url_desc">URL of a JSON list of allowed package names. Entries that are URLs are fetched as additional lists. When set, only listed apps and updates to installed apps can be installed.</string>
+    <string name="error_not_whitelisted">Installation blocked: this app is not in the allowed apps list set by your administrator.</string>
+    <string name="request_approval_share_text">Please approve installing %1$s (package: %2$s) and add it to the approved apps list.</string>
 </resources>

@@ -85,6 +85,7 @@
     <string name="details_no_ads">ללא מודעות</string>
     <string name="onboarding_title_welcome">ברוך בואך</string>
     <string name="action_whitelist">רשימת ההתרה</string>
+    <string name="action_request_approval">בקש אישור</string>
     <string name="menu_license">רישיון</string>
     <string name="purchase_failed">ההורדה נכשלה</string>
     <string name="action_later">מאוחר יותר</string>
@@ -444,4 +445,6 @@
     <string name="pref_updates_app_source">מקור היישום</string>
     <string name="verification_failed">אימות הקבצים שהורדו נכשל</string>
     <string name="details_data_safety_collect">נתונים שאפליקציה זו עשויה לאסוף</string>
+    <string name="error_not_whitelisted">ההתקנה נחסמה: אפליקציה זו אינה נמצאת ברשימת האפליקציות המאושרות שהוגדרה על ידי מנהל המערכת.</string>
+    <string name="request_approval_share_text">בבקשה לאשר את התקנת האפליקציה %1$s (חבילה: %2$s) ולהוסיף אותה לרשימת האפליקציות המאושרות.</string>
 </resources>

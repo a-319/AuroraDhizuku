@@ -40,6 +40,7 @@ import com.aurora.store.data.model.DownloadInfo
 import com.aurora.store.data.model.DownloadStatus
 import com.aurora.store.data.network.HttpClient
 import com.aurora.store.data.providers.AuthProvider
+import com.aurora.store.data.providers.WhitelistProvider
 import com.aurora.store.data.room.download.Download
 import com.aurora.store.data.room.download.DownloadDao
 import com.aurora.store.util.CertUtil
@@ -73,6 +74,7 @@ class DownloadWorker @AssistedInject constructor(
     private val appInstaller: AppInstaller,
     private val httpClient: IHttpClient,
     private val purchaseHelper: PurchaseHelper,
+    private val whitelistProvider: WhitelistProvider,
     @Assisted private val context: Context,
     @Assisted workerParams: WorkerParameters
 ) : AuthWorker(authProvider, context, workerParams) {
@@ -99,6 +101,9 @@ class DownloadWorker @AssistedInject constructor(
     inner class VerificationFailedException :
         Exception(context.getString(R.string.verification_failed))
 
+    inner class NotWhitelistedException :
+        Exception(context.getString(R.string.error_not_whitelisted))
+
     override suspend fun doWork(): Result {
         super.doWork()
 
@@ -113,6 +118,12 @@ class DownloadWorker @AssistedInject constructor(
             icon = bitmap.scale(96, 96)
         } catch (exception: Exception) {
             return onFailure(exception)
+        }
+
+        // Defense-in-depth for the managed whitelist: rows queued before the policy was
+        // applied must not slip past the checks in DownloadHelper.
+        if (!whitelistProvider.isAllowed(download.packageName)) {
+            return onFailure(NotWhitelistedException())
         }
 
         // Set work/service to foreground on < Android 12.0

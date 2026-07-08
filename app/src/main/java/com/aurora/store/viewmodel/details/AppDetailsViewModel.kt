@@ -33,6 +33,7 @@ import com.aurora.store.data.model.PlexusReport
 import com.aurora.store.data.model.Report
 import com.aurora.store.data.model.Scores
 import com.aurora.store.data.providers.AuthProvider
+import com.aurora.store.data.providers.WhitelistProvider
 import com.aurora.store.data.room.favourite.Favourite
 import com.aurora.store.data.room.favourite.FavouriteDao
 import com.aurora.store.util.CertUtil
@@ -43,8 +44,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -66,7 +69,8 @@ class AppDetailsViewModel @Inject constructor(
     private val downloadHelper: DownloadHelper,
     private val favouriteDao: FavouriteDao,
     private val httpClient: IHttpClient,
-    private val json: Json
+    private val json: Json,
+    private val whitelistProvider: WhitelistProvider
 ) : ViewModel() {
 
     private val _app = MutableStateFlow<App?>(null)
@@ -99,6 +103,17 @@ class AppDetailsViewModel @Inject constructor(
     private val _favourite = MutableStateFlow(false)
     val favourite = _favourite.asStateFlow()
 
+    private val _checkingApproval = MutableStateFlow(false)
+    val checkingApproval = _checkingApproval.asStateFlow()
+
+    data class ApprovalRequest(val displayName: String, val packageName: String)
+
+    // One-shot signal carrying the details for a share-sheet approval request, emitted when a
+    // refresh confirms the app is still not on the managed whitelist. One-shot so it doesn't
+    // re-surface (and re-open the share sheet) on rotation/resume.
+    private val _approvalRequest = MutableSharedFlow<ApprovalRequest>(extraBufferCapacity = 1)
+    val approvalRequest = _approvalRequest.asSharedFlow()
+
     private val download = combine(app, downloadHelper.downloadsList) { a, list ->
         if (a?.packageName.isNullOrBlank()) return@combine null
         list.find { d -> d.packageName == a.packageName }
@@ -127,22 +142,31 @@ class AppDetailsViewModel @Inject constructor(
     private val hasValidUpdate: Boolean
         get() = (isUpdatable && hasValidCerts) || (isUpdatable && isExtendedUpdateEnabled)
 
-    private val defaultAppState: AppState
-        get() = when {
-            isInstalled -> {
-                if (hasValidUpdate) {
-                    AppState.Updatable
-                } else {
-                    val info = PackageUtil.getPackageInfo(context, app.value!!.packageName)
-                    AppState.Installed(
-                        versionName = info.versionName ?: String(),
-                        versionCode = PackageInfoCompat.getLongVersionCode(info)
-                    )
-                }
+    /**
+     * Resolves the state for an app that isn't mid-download/install. Not a plain property
+     * because, for an app that is neither installed nor archived, it must consult
+     * [WhitelistProvider] (a suspend, potentially network-bound check) to tell an ordinary
+     * not-yet-installed app apart from one blocked by the managed whitelist.
+     */
+    private suspend fun computeDefaultAppState(): AppState = when {
+        isInstalled -> {
+            if (hasValidUpdate) {
+                AppState.Updatable
+            } else {
+                val info = PackageUtil.getPackageInfo(context, app.value!!.packageName)
+                AppState.Installed(
+                    versionName = info.versionName ?: String(),
+                    versionCode = PackageInfoCompat.getLongVersionCode(info)
+                )
             }
-
-            else -> if (isArchived) AppState.Archived else AppState.Unavailable
         }
+
+        isArchived -> AppState.Archived
+
+        !whitelistProvider.isAllowed(app.value!!.packageName) -> AppState.NotWhitelisted
+
+        else -> AppState.Unavailable
+    }
 
     init {
         observeAppState()
@@ -154,7 +178,7 @@ class AppDetailsViewModel @Inject constructor(
                 _app.value = appDetailsHelper.getAppByPackageName(packageName).copy(
                     isInstalled = PackageUtil.isInstalled(context, packageName)
                 )
-                _state.value = defaultAppState
+                _state.value = computeDefaultAppState()
             } catch (exception: Exception) {
                 Log.e(TAG, "Failed to fetch app details", exception)
                 _app.value = null
@@ -241,13 +265,37 @@ class AppDetailsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Re-checks the managed whitelist for the loaded app, bypassing the provider's TTL cache,
+     * and recomputes its state so the UI reflects an approval the administrator may have just
+     * granted. If it's still blocked, emits [approvalRequest] so the UI can open the share sheet
+     * with a pre-filled request for whoever manages the whitelist.
+     */
+    fun requestApproval() {
+        val loadedApp = app.value ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            _checkingApproval.value = true
+            try {
+                if (whitelistProvider.isAllowed(loadedApp.packageName, forceRefresh = true)) {
+                    _state.value = computeDefaultAppState()
+                } else {
+                    _approvalRequest.tryEmit(
+                        ApprovalRequest(loadedApp.displayName, loadedApp.packageName)
+                    )
+                }
+            } finally {
+                _checkingApproval.value = false
+            }
+        }
+    }
+
     private fun observeAppState() {
         AuroraApp.events.installerEvent
             .filter { it.packageName == app.value?.packageName }
             .onEach { event ->
                 _state.value = when {
                     event is InstallerEvent.Installing -> AppState.Installing(event.progress)
-                    else -> defaultAppState
+                    else -> computeDefaultAppState()
                 }
             }.launchIn(viewModelScope)
 
@@ -263,7 +311,7 @@ class AppDetailsViewModel @Inject constructor(
 
                 DownloadStatus.PURCHASING -> AppState.Purchasing
 
-                else -> defaultAppState
+                else -> computeDefaultAppState()
             }
         }.launchIn(viewModelScope)
     }

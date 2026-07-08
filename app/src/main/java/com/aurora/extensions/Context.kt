@@ -85,6 +85,25 @@ fun Context.share(displayName: String, packageName: String) {
     }
 }
 
+/**
+ * Opens the share sheet with a pre-filled message asking whoever manages the device's
+ * managed whitelist to approve installing [packageName], so the user can forward the request
+ * through whichever app they'd use to reach that person (chat, email, etc).
+ */
+fun Context.shareApprovalRequest(displayName: String, packageName: String) {
+    try {
+        val message = getString(R.string.request_approval_share_text, displayName, packageName)
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, message)
+            type = "text/plain"
+        }
+        startActivity(Intent.createChooser(sendIntent, getString(R.string.action_share)))
+    } catch (exception: Exception) {
+        Log.e(TAG, "Failed to share approval request", exception)
+    }
+}
+
 fun Context.mailTo(email: String) {
     try {
         val sendIntent = Intent().apply {

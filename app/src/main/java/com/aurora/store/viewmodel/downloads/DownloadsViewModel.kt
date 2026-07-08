@@ -13,9 +13,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.aurora.extensions.TAG
+import com.aurora.store.AuroraApp
+import com.aurora.store.R
+import com.aurora.store.data.event.InstallerEvent
 import com.aurora.store.data.helper.DownloadHelper
 import com.aurora.store.data.installer.AppInstaller
 import com.aurora.store.data.paging.GenericPagingSource.Companion.pager
+import com.aurora.store.data.providers.WhitelistProvider
 import com.aurora.store.data.room.download.Download
 import com.aurora.store.data.work.ExportWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,6 +37,7 @@ import kotlinx.coroutines.launch
 class DownloadsViewModel @Inject constructor(
     private val downloadHelper: DownloadHelper,
     private val appInstaller: AppInstaller,
+    private val whitelistProvider: WhitelistProvider,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -74,10 +79,24 @@ class DownloadsViewModel @Inject constructor(
     }
 
     fun install(download: Download) {
-        try {
-            appInstaller.getPreferredInstaller().install(download)
-        } catch (exception: Exception) {
-            Log.e(TAG, "Failed to install ${download.packageName}", exception)
+        viewModelScope.launch {
+            // A download may predate the managed whitelist policy; never install past it
+            if (!whitelistProvider.isAllowed(download.packageName)) {
+                Log.i(TAG, "Blocked ${download.packageName}; not allowed by managed whitelist")
+                AuroraApp.events.send(
+                    InstallerEvent.Failed(
+                        packageName = download.packageName,
+                        error = context.getString(R.string.error_not_whitelisted)
+                    )
+                )
+                return@launch
+            }
+
+            try {
+                appInstaller.getPreferredInstaller().install(download)
+            } catch (exception: Exception) {
+                Log.e(TAG, "Failed to install ${download.packageName}", exception)
+            }
         }
     }
 

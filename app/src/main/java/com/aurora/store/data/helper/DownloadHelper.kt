@@ -10,7 +10,10 @@ import androidx.work.WorkManager
 import com.aurora.extensions.TAG
 import com.aurora.gplayapi.data.models.App
 import com.aurora.store.AuroraApp
+import com.aurora.store.R
+import com.aurora.store.data.event.InstallerEvent
 import com.aurora.store.data.model.DownloadStatus
+import com.aurora.store.data.providers.WhitelistProvider
 import com.aurora.store.data.room.download.Download
 import com.aurora.store.data.room.download.DownloadDao
 import com.aurora.store.data.room.suite.ExternalApk
@@ -31,7 +34,8 @@ import kotlinx.coroutines.launch
  */
 class DownloadHelper @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val downloadDao: DownloadDao
+    private val downloadDao: DownloadDao,
+    private val whitelistProvider: WhitelistProvider
 ) {
 
     companion object {
@@ -57,6 +61,13 @@ class DownloadHelper @Inject constructor(
         }.invokeOnCompletion {
             observeDownloads()
         }
+
+        // Warm the managed whitelist cache so the first install check is instant even for
+        // very large lists. No-op when whitelist mode is inactive.
+        AuroraApp.scope.launch {
+            runCatching { whitelistProvider.prefetch() }
+                .onFailure { Log.e(TAG, "Failed to prefetch managed whitelist", it) }
+        }
     }
 
     private fun observeDownloads() {
@@ -80,6 +91,7 @@ class DownloadHelper @Inject constructor(
      * @param app [App] to download
      */
     suspend fun enqueueApp(app: App) {
+        if (isBlockedByWhitelist(app.packageName)) return
         downloadDao.insert(Download.fromApp(app))
     }
 
@@ -88,6 +100,7 @@ class DownloadHelper @Inject constructor(
      * @param update [Update] to download
      */
     suspend fun enqueueUpdate(update: Update) {
+        if (isBlockedByWhitelist(update.packageName)) return
         downloadDao.insert(Download.fromUpdate(update))
     }
 
@@ -96,7 +109,26 @@ class DownloadHelper @Inject constructor(
      * @param externalApk [ExternalApk] to download
      */
     suspend fun enqueueStandalone(externalApk: ExternalApk) {
+        if (isBlockedByWhitelist(externalApk.packageName)) return
         downloadDao.insert(Download.fromExternalApk(externalApk))
+    }
+
+    /**
+     * Blocks packages not allowed by the managed whitelist (see [WhitelistProvider]) and
+     * surfaces the rejection as an install failure event. Always false when whitelist mode
+     * is inactive.
+     */
+    private suspend fun isBlockedByWhitelist(packageName: String): Boolean {
+        if (whitelistProvider.isAllowed(packageName)) return false
+
+        Log.i(TAG, "Blocked $packageName; not allowed by managed whitelist")
+        AuroraApp.events.send(
+            InstallerEvent.Failed(
+                packageName = packageName,
+                error = context.getString(R.string.error_not_whitelisted)
+            )
+        )
+        return true
     }
 
     /**
