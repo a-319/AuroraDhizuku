@@ -28,12 +28,12 @@ jobs:
         run: chmod +x gradlew
 
       # פקודת הבנייה שכבר גילינו שעובדת
-      - name: Build Vanilla Debug APK
-        run: ./gradlew assembleVanillaDebug
+      - name: Build Vanilla Release APK
+        run: ./gradlew assembleVanillaRelease
 
       # העלאת ה-APK המוכן כדי שתוכל להוריד אותו מהאתר
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: aurora-vanilla-debug
-          path: app/build/outputs/apk/vanilla/debug/*.apk
+          name: aurora-vanilla-release
+          path: app/build/outputs/apk/vanilla/release/*.apk

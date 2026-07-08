@@ -99,8 +99,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (File("signing.properties").exists()) {
-                signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (File("signing.properties").exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("aosp")
             }
         }
 
