@@ -16,6 +16,7 @@ coil = "3.3.0"
 composeBom = "2025.12.01"
 composeMaterial = "1.5.0-alpha11"
 core = "1.17.0"
+dhizuku = "2.5.4"
 epoxy = "5.2.0"
 espresso = "3.7.0"
 gplayapi = "3.5.7"
@@ -88,6 +89,7 @@ auroraoss-gplayapi = { module = "com.auroraoss:gplayapi", version.ref = "gplayap
 coil-kt = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+dhizuku-api = { module = "io.github.iamr0s:Dhizuku-API", version.ref = "dhizuku" }
 facebook-shimmer = { module = "com.facebook.shimmer:shimmer", version.ref = "shimmer" }
 github-topjohnwu-libsu = { module = "com.github.topjohnwu.libsu:core", version.ref = "libsu" }
 google-android-material = { module = "com.google.android.material:material", version.ref = "material" }
