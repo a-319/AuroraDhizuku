@@ -36,11 +36,18 @@ import kotlinx.serialization.json.JsonPrimitive
  *    (so a whole category can be allowed with a single line); and
  * 3. packages already on the device — installed or archived (i.e. updates).
  *
- * Supported JSON formats (both may be mixed freely across nested lists):
- * - an array whose string entries are either package names or `http(s)` URLs of nested lists:
- *   `["com.example.app", "https://example.com/category.json"]`
- * - an object with `packages` (package names) and/or `includes`/`lists`/`urls` (nested list
- *   URLs) arrays.
+ * Supported list formats (all may be mixed freely across nested lists):
+ * - a JSON array whose string entries are either package names or `http(s)` URLs of nested
+ *   lists: `["com.example.app", "https://example.com/category.json"]`
+ * - a JSON object with `packages` (package names) and/or `includes`/`lists`/`urls` (nested
+ *   list URLs) arrays.
+ * - plain text: one package name or nested-list URL per line, no quotes/commas/brackets
+ *   needed; blank lines and lines starting with `#` or `//` are ignored. Malformed JSON
+ *   (e.g. a missing comma) also degrades gracefully to this line-based parsing.
+ *
+ * Regular GitHub file links (`github.com/{owner}/{repo}/blob/...`) are converted to their
+ * `raw.githubusercontent.com` equivalent automatically, since the blob page is HTML rather
+ * than the file's content.
  *
  * Lists may be large, so the merged result is kept as an in-memory [HashSet] for O(1) lookups,
  * refreshed at most once per [CACHE_TTL_MILLIS], and persisted to disk so lookups keep working
@@ -65,9 +72,29 @@ class WhitelistProvider @Inject constructor(
         private val PACKAGE_KEYS = setOf("packages", "apps")
         private val LIST_KEYS = setOf("includes", "lists", "urls")
 
+        // github.com/{owner}/{repo}/(blob|raw)/{branch}/{path} → raw.githubusercontent.com
+        private val GITHUB_FILE_REGEX = Regex(
+            "^https?://(?:www\\.)?github\\.com/([^/]+)/([^/]+)/(?:blob|raw)/(.+)$",
+            RegexOption.IGNORE_CASE
+        )
+
+        // Valid characters of an Android package name; used to drop garbage lines (e.g. the
+        // remains of broken JSON syntax) when parsing a list as plain text
+        private val PACKAGE_NAME_REGEX = Regex("^[a-zA-Z0-9_.]+$")
+
         private fun isUrl(value: String): Boolean =
             value.startsWith("https://", ignoreCase = true) ||
                 value.startsWith("http://", ignoreCase = true)
+
+        /**
+         * Converts a regular GitHub file link (the HTML blob page) to the raw file URL it
+         * actually points at. Non-GitHub URLs are returned untouched.
+         */
+        private fun normalizeUrl(url: String): String {
+            val match = GITHUB_FILE_REGEX.find(url.trim()) ?: return url.trim()
+            val (owner, repo, branchAndPath) = match.destructured
+            return "https://raw.githubusercontent.com/$owner/$repo/$branchAndPath"
+        }
     }
 
     @Serializable
@@ -184,19 +211,61 @@ class WhitelistProvider @Inject constructor(
         packages: MutableSet<String>,
         visited: MutableSet<String>
     ) {
+        val resolvedUrl = normalizeUrl(url)
+
         if (depth > MAX_LIST_DEPTH) {
-            Log.w(TAG, "Ignoring whitelist deeper than $MAX_LIST_DEPTH levels: $url")
+            Log.w(TAG, "Ignoring whitelist deeper than $MAX_LIST_DEPTH levels: $resolvedUrl")
             return
         }
         // Silently skip URLs already fetched (cycles) but cap the total amount of lists
-        if (!visited.add(url)) return
+        if (!visited.add(resolvedUrl)) return
         if (visited.size > MAX_LISTS) throw IOException("Too many nested whitelists (> $MAX_LISTS)")
 
-        httpClient.call(url).use { response ->
+        httpClient.call(resolvedUrl).use { response ->
             if (!response.isSuccessful) {
-                throw IOException("HTTP ${response.code} while fetching whitelist $url")
+                throw IOException("HTTP ${response.code} while fetching whitelist $resolvedUrl")
             }
-            collect(json.parseToJsonElement(response.body.string()), depth, packages, visited)
+
+            val body = response.body.string()
+            val element = try {
+                json.parseToJsonElement(body)
+            } catch (_: Exception) {
+                // Not valid JSON — treat it as a plain-text list (one entry per line)
+                null
+            }
+
+            if (element is JsonArray || element is JsonObject) {
+                collect(element, depth, packages, visited)
+            } else {
+                collectPlainText(body, depth, packages, visited)
+            }
+        }
+    }
+
+    /**
+     * Line-based parsing for plain-text lists: each line holds one package name or nested
+     * list URL, without any JSON syntax. Stray JSON leftovers (brackets, quotes, trailing
+     * commas) are stripped per line, so a slightly malformed JSON list — a missing comma,
+     * say — still yields all of its entries instead of blocking everything.
+     */
+    private fun collectPlainText(
+        body: String,
+        depth: Int,
+        packages: MutableSet<String>,
+        visited: MutableSet<String>
+    ) {
+        body.lineSequence().forEach { line ->
+            val value = line.trim()
+                .removePrefix("[").removeSuffix("]").trim()
+                .removeSuffix(",").trim()
+                .removeSurrounding("\"").removeSurrounding("'").trim()
+
+            when {
+                value.isEmpty() || value.startsWith("#") || value.startsWith("//") -> {}
+                isUrl(value) -> fetchList(value, depth + 1, packages, visited)
+                PACKAGE_NAME_REGEX.matches(value) -> packages.add(value)
+                else -> Log.w(TAG, "Skipping invalid whitelist entry: $value")
+            }
         }
     }
 
