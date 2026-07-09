@@ -106,7 +106,11 @@ class AppDetailsViewModel @Inject constructor(
     private val _checkingApproval = MutableStateFlow(false)
     val checkingApproval = _checkingApproval.asStateFlow()
 
-    data class ApprovalRequest(val displayName: String, val packageName: String)
+    data class ApprovalRequest(
+        val displayName: String,
+        val packageName: String,
+        val whitelistUrl: String?
+    )
 
     // One-shot signal carrying the details for a share-sheet approval request, emitted when a
     // refresh confirms the app is still not on the managed whitelist. One-shot so it doesn't
@@ -280,7 +284,11 @@ class AppDetailsViewModel @Inject constructor(
                     _state.value = computeDefaultAppState()
                 } else {
                     _approvalRequest.tryEmit(
-                        ApprovalRequest(loadedApp.displayName, loadedApp.packageName)
+                        ApprovalRequest(
+                            displayName = loadedApp.displayName,
+                            packageName = loadedApp.packageName,
+                            whitelistUrl = whitelistProvider.whitelistUrl
+                        )
                     )
                 }
             } finally {

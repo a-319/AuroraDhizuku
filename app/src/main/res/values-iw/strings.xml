@@ -447,4 +447,5 @@
     <string name="details_data_safety_collect">נתונים שאפליקציה זו עשויה לאסוף</string>
     <string name="error_not_whitelisted">ההתקנה נחסמה: אפליקציה זו אינה נמצאת ברשימת האפליקציות המאושרות שהוגדרה על ידי מנהל המערכת.</string>
     <string name="request_approval_share_text">בבקשה לאשר את התקנת האפליקציה %1$s (חבילה: %2$s) ולהוסיף אותה לרשימת האפליקציות המאושרות.</string>
+    <string name="request_approval_share_list_url">רשימת האפליקציות המאושרות נמצאת בכתובת: %1$s</string>
 </resources>

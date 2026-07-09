@@ -567,4 +567,5 @@
     <string name="managed_whitelist_url_desc">URL of a JSON list of allowed package names. Entries that are URLs are fetched as additional lists. When set, only listed apps and updates to installed apps can be installed.</string>
     <string name="error_not_whitelisted">Installation blocked: this app is not in the allowed apps list set by your administrator.</string>
     <string name="request_approval_share_text">Please approve installing %1$s (package: %2$s) and add it to the approved apps list.</string>
+    <string name="request_approval_share_list_url">The approved apps list is at: %1$s</string>
 </resources>

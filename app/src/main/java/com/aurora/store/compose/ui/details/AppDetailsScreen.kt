@@ -119,7 +119,11 @@ fun AppDetailsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.approvalRequest.collect { request ->
-            context.shareApprovalRequest(request.displayName, request.packageName)
+            context.shareApprovalRequest(
+                displayName = request.displayName,
+                packageName = request.packageName,
+                whitelistUrl = request.whitelistUrl
+            )
         }
     }
 
