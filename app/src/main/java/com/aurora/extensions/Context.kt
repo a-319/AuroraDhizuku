@@ -170,8 +170,13 @@ fun Context.getStyledAttributeColor(id: Int): Int {
     return styledAttr
 }
 
-fun Context.isIgnoringBatteryOptimizations(): Boolean =
-    getSystemService<PowerManager>()?.isIgnoringBatteryOptimizations(packageName) ?: true
+fun Context.isIgnoringBatteryOptimizations(): Boolean = when {
+    isMAndAbove -> {
+        getSystemService<PowerManager>()?.isIgnoringBatteryOptimizations(packageName) ?: true
+    }
+
+    else -> true
+}
 
 fun Context.areNotificationsEnabled(): Boolean = when {
     isNAndAbove -> getSystemService<NotificationManager>()!!.areNotificationsEnabled()

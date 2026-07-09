@@ -19,6 +19,7 @@ import com.aurora.extensions.checkManifestPermission
 import com.aurora.extensions.isDomainVerified
 import com.aurora.extensions.isExternalStorageAccessible
 import com.aurora.extensions.isIgnoringBatteryOptimizations
+import com.aurora.extensions.isMAndAbove
 import com.aurora.extensions.isOAndAbove
 import com.aurora.extensions.isRAndAbove
 import com.aurora.extensions.isSAndAbove
@@ -94,15 +95,21 @@ class PermissionProvider(private val fragment: Fragment) :
                     },
                     optional = false,
                     isGranted = isGranted(context, PermissionType.INSTALL_UNKNOWN_APPS)
-                ),
-                Permission(
-                    type = PermissionType.DOZE_WHITELIST,
-                    title = context.getString(R.string.onboarding_permission_doze),
-                    subtitle = context.getString(R.string.onboarding_permission_doze_desc),
-                    optional = true,
-                    isGranted = isGranted(context, PermissionType.DOZE_WHITELIST)
                 )
             )
+
+            // Battery optimizations (Doze) only exist on Android 6.0 (M) and above
+            if (isMAndAbove) {
+                permissions.add(
+                    Permission(
+                        type = PermissionType.DOZE_WHITELIST,
+                        title = context.getString(R.string.onboarding_permission_doze),
+                        subtitle = context.getString(R.string.onboarding_permission_doze_desc),
+                        optional = true,
+                        isGranted = isGranted(context, PermissionType.DOZE_WHITELIST)
+                    )
+                )
+            }
 
             if (isRAndAbove) {
                 permissions.add(
