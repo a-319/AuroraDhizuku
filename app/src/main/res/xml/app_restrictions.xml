@@ -6,4 +6,11 @@
         android:description="@string/managed_hide_screenshots_desc"
         android:restrictionType="bool"
         android:defaultValue="false" />
+
+    <restriction
+        android:key="managed_whitelist_url"
+        android:title="@string/managed_whitelist_url_title"
+        android:description="@string/managed_whitelist_url_desc"
+        android:restrictionType="string"
+        android:defaultValue="" />
 </restrictions>

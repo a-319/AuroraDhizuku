@@ -47,6 +47,7 @@ import com.aurora.extensions.appInfo
 import com.aurora.extensions.requiresGMS
 import com.aurora.extensions.requiresObbDir
 import com.aurora.extensions.share
+import com.aurora.extensions.shareApprovalRequest
 import com.aurora.extensions.toast
 import com.aurora.gplayapi.data.models.App
 import com.aurora.gplayapi.data.models.Review
@@ -112,8 +113,19 @@ fun AppDetailsScreen(
     val dataSafetyReport by viewModel.dataSafetyReport.collectAsStateWithLifecycle()
     val plexusScores by viewModel.plexusScores.collectAsStateWithLifecycle()
     val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
+    val checkingApproval by viewModel.checkingApproval.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = packageName) { viewModel.fetchAppDetails(packageName) }
+
+    LaunchedEffect(Unit) {
+        viewModel.approvalRequest.collect { request ->
+            context.shareApprovalRequest(
+                displayName = request.displayName,
+                packageName = request.packageName,
+                whitelistUrl = request.whitelistUrl
+            )
+        }
+    }
 
     when (state) {
         is AppState.Loading -> ScreenContentLoading(onNavigateUp = onNavigateUp)
@@ -137,12 +149,14 @@ fun AppDetailsScreen(
                 dataSafetyReport = dataSafetyReport,
                 exodusReport = exodusReport,
                 hideScreenshotsSection = hideScreenshotsSection,
+                checkingApproval = checkingApproval,
                 onNavigateUp = onNavigateUp,
                 onNavigateToAppDetails = onNavigateToAppDetails,
                 onDownload = { requestedApp -> viewModel.enqueueDownload(requestedApp) },
                 onFavorite = { viewModel.toggleFavourite(app!!) },
                 onCancelDownload = { viewModel.cancelDownload(app!!) },
                 onUninstall = { AppInstaller.uninstall(context, packageName) },
+                onRequestApproval = { viewModel.requestApproval() },
                 onOpen = {
                     try {
                         context.startActivity(
@@ -204,12 +218,14 @@ private fun ScreenContentApp(
     dataSafetyReport: DataSafetyReport? = null,
     exodusReport: Report? = null,
     hideScreenshotsSection: Boolean = false,
+    checkingApproval: Boolean = false,
     onNavigateUp: () -> Unit = {},
     onNavigateToAppDetails: (packageName: String) -> Unit = {},
     onDownload: (requestedApp: App) -> Unit = {},
     onFavorite: () -> Unit = {},
     onCancelDownload: () -> Unit = {},
     onUninstall: () -> Unit = {},
+    onRequestApproval: () -> Unit = {},
     onOpen: () -> Unit = {},
     onTestingSubscriptionChange: (subscribe: Boolean) -> Unit = {},
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfo(),
@@ -317,6 +333,16 @@ private fun ScreenContentApp(
                     onSecondaryAction = onUninstall,
                     isPrimaryActionEnabled = PackageUtil
                         .getLaunchIntent(context, app.packageName) != null
+                )
+            }
+
+            is AppState.NotWhitelisted -> {
+                Actions(
+                    primaryActionDisplayName = stringResource(R.string.action_request_approval),
+                    secondaryActionDisplayName = stringResource(R.string.title_manual_download),
+                    isPrimaryActionEnabled = !checkingApproval,
+                    onPrimaryAction = onRequestApproval,
+                    onSecondaryAction = { showExtraPane(ExtraScreen.ManualDownload) }
                 )
             }
 
