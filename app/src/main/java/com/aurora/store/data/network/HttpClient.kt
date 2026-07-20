@@ -23,7 +23,6 @@ import android.util.Log
 import com.aurora.extensions.TAG
 import com.aurora.gplayapi.data.models.PlayResponse
 import com.aurora.gplayapi.network.IHttpClient
-import com.aurora.store.BuildConfig.APPLICATION_ID
 import com.aurora.store.BuildConfig.VERSION_CODE
 import com.aurora.store.BuildConfig.VERSION_NAME
 import java.io.IOException
@@ -48,6 +47,11 @@ class HttpClient @Inject constructor(private val okHttpClient: OkHttpClient) : I
     companion object {
         private const val POST = "POST"
         private const val GET = "GET"
+
+        // The token dispenser server only issues anonymous tokens to clients that
+        // identify as the official Aurora Store. Keep this independent of the
+        // applicationId so renaming the app's package doesn't break login.
+        private const val DISPENSER_USER_AGENT_ID = "com.aurora.store"
     }
 
     private val _responseCode = MutableStateFlow(100)
@@ -90,7 +94,8 @@ class HttpClient @Inject constructor(private val okHttpClient: OkHttpClient) : I
     }
 
     override fun postAuth(url: String, body: ByteArray): PlayResponse {
-        val headers = mapOf("User-Agent" to "${APPLICATION_ID}-${VERSION_NAME}-${VERSION_CODE}")
+        val headers =
+            mapOf("User-Agent" to "$DISPENSER_USER_AGENT_ID-${VERSION_NAME}-${VERSION_CODE}")
         val requestBody = body.toRequestBody("application/json".toMediaType(), 0, body.size)
         val request = Request(
             url = url.toHttpUrl(),
@@ -124,7 +129,8 @@ class HttpClient @Inject constructor(private val okHttpClient: OkHttpClient) : I
     }
 
     override fun getAuth(url: String): PlayResponse {
-        val headers = mapOf("User-Agent" to "${APPLICATION_ID}-${VERSION_NAME}-${VERSION_CODE}")
+        val headers =
+            mapOf("User-Agent" to "$DISPENSER_USER_AGENT_ID-${VERSION_NAME}-${VERSION_CODE}")
         val request = Request(
             url = url.toHttpUrl(),
             headers = headers.toHeaders(),

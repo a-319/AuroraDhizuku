@@ -53,7 +53,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.aurora.store"
+        applicationId = "aurora.dhizuku"
         minSdk = 23
         targetSdk = 36
 
