@@ -6,9 +6,9 @@ import com.aurora.store.BuildConfig
  * Class representing build types for Aurora Store
  */
 enum class BuildType(val packageName: String) {
-    RELEASE("aurora.dhizuku"),
-    NIGHTLY("aurora.dhizuku.nightly"),
-    DEBUG("aurora.dhizuku.debug");
+    RELEASE("lessevil.aurora"),
+    NIGHTLY("lessevil.aurora.nightly"),
+    DEBUG("lessevil.aurora.debug");
 
     companion object {
 
