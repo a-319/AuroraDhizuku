@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -32,6 +33,7 @@ import com.aurora.gplayapi.data.models.Review
 import com.aurora.store.R
 import com.aurora.store.compose.preview.PreviewTemplate
 import com.aurora.store.compose.preview.ReviewPreviewProvider
+import com.aurora.store.util.ManagedConfigurations
 
 /**
  * Composable for viewing a review about an app
@@ -40,6 +42,16 @@ import com.aurora.store.compose.preview.ReviewPreviewProvider
  */
 @Composable
 fun ReviewListItem(modifier: Modifier = Modifier, review: Review) {
+    val context = LocalContext.current
+    // The same managed configuration that hides the app's images area also
+    // hides the reviewers' (responders') profile images.
+    val hideProfileImage = remember(context) {
+        ManagedConfigurations.getBoolean(
+            context = context,
+            key = ManagedConfigurations.HIDE_APP_DETAILS_SCREENSHOTS
+        )
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -48,17 +60,19 @@ fun ReviewListItem(modifier: Modifier = Modifier, review: Review) {
                 vertical = dimensionResource(R.dimen.padding_small)
             )
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(review.userPhotoUrl)
-                .crossfade(true)
-                .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .requiredSize(dimensionResource(R.dimen.icon_size_small))
-                .clip(RoundedCornerShape(dimensionResource(R.dimen.radius_medium)))
-        )
+        if (!hideProfileImage) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(review.userPhotoUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .requiredSize(dimensionResource(R.dimen.icon_size_small))
+                    .clip(RoundedCornerShape(dimensionResource(R.dimen.radius_medium)))
+            )
+        }
         Column(
             modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.margin_small))
         ) {

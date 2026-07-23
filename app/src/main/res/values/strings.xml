@@ -562,7 +562,7 @@
     <string name="loading">Loading in progress</string>
     <string name="page">Page <xliff:g id="number">%1$d</xliff:g></string>
     <string name="managed_hide_screenshots_title">Hide app screenshots section</string>
-    <string name="managed_hide_screenshots_desc">When enabled, screenshot previews are hidden from app details pages.</string>
+    <string name="managed_hide_screenshots_desc">When enabled, screenshot previews and reviewers\' profile images are hidden from app details pages.</string>
     <string name="managed_whitelist_url_title">App whitelist URL</string>
     <string name="managed_whitelist_url_desc">URL of a JSON list of allowed package names. Entries that are URLs are fetched as additional lists. When set, only listed apps and updates to installed apps can be installed.</string>
     <string name="error_not_whitelisted">Installation blocked: this app is not in the allowed apps list set by your administrator.</string>
