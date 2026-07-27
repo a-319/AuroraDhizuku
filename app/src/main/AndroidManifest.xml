@@ -180,16 +180,35 @@
             android:name=".data.receiver.DownloadCancelReceiver"
             android:exported="false" />
 
-        <!-- SessionInstaller (as device owner) -->
+        <!-- Device owner, holds the permission without enforcing any policy -->
         <receiver
             android:name=".data.receiver.DeviceOwnerReceiver"
+            android:description="@string/device_owner_admin_standard_desc"
             android:exported="true"
+            android:label="@string/device_owner_admin_standard"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data
                 android:name="android.app.device_admin"
                 android:resource="@xml/device_owner_receiver" />
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+                <action android:name="android.app.action.TRANSFER_OWNERSHIP_COMPLETE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Device owner, protects the app the permission was transferred from -->
+        <receiver
+            android:name=".data.receiver.ProtectedDeviceOwnerReceiver"
+            android:description="@string/device_owner_admin_protected_desc"
+            android:exported="true"
+            android:label="@string/device_owner_admin_protected"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_owner_receiver_protected" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+                <action android:name="android.app.action.TRANSFER_OWNERSHIP_COMPLETE" />
             </intent-filter>
         </receiver>
 

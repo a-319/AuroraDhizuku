@@ -32,7 +32,9 @@ import com.aurora.extensions.navigate
 import com.aurora.extensions.showDialog
 import com.aurora.store.R
 import com.aurora.store.compose.navigation.Screen
+import com.aurora.store.util.DeviceOwnerManager
 import com.aurora.store.util.Preferences.PREFERENCE_INSTALLATION_DEVICE_OWNER
+import com.aurora.store.util.Preferences.PREFERENCE_INSTALLATION_DEVICE_OWNER_MANAGE
 import com.aurora.store.util.Preferences.PREFERENCE_INSTALLER_ID
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -49,6 +51,13 @@ class InstallationPreference : PreferenceFragmentCompat() {
             }
         }
 
+        findPreference<Preference>(PREFERENCE_INSTALLATION_DEVICE_OWNER_MANAGE)?.apply {
+            setOnPreferenceClickListener {
+                requireContext().navigate(Screen.DeviceOwner)
+                true
+            }
+        }
+
         findPreference<Preference>(PREFERENCE_INSTALLATION_DEVICE_OWNER)?.apply {
             val packageName = context.packageName
             val devicePolicyManager = context.getSystemService<DevicePolicyManager>()
@@ -59,8 +68,8 @@ class InstallationPreference : PreferenceFragmentCompat() {
                     context.getString(R.string.pref_clear_device_owner_title),
                     context.getString(R.string.pref_clear_device_owner_desc),
                     { _: DialogInterface, _: Int ->
-                        @Suppress("DEPRECATION")
-                        devicePolicyManager!!.clearDeviceOwnerApp(packageName)
+                        // Drops every policy we enforce before giving up the ownership
+                        DeviceOwnerManager.releaseOwnership(context)
                         activity?.recreate()
                     },
                     { dialog: DialogInterface, _: Int -> dialog.dismiss() }

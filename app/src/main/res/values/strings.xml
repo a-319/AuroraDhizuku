@@ -568,4 +568,45 @@
     <string name="error_not_whitelisted">Installation blocked: this app is not in the allowed apps list set by your administrator.</string>
     <string name="request_approval_share_text">Please approve installing %1$s (package: %2$s) and add it to the approved apps list.</string>
     <string name="request_approval_share_list_url">The approved apps list is at: %1$s</string>
+
+    <!-- Device owner permission -->
+    <string name="device_owner_admin_standard">Aurora Store</string>
+    <string name="device_owner_admin_standard_desc">Installs apps silently as the device owner.</string>
+    <string name="device_owner_admin_protected">Aurora Store (protected)</string>
+    <string name="device_owner_admin_protected_desc">Installs apps silently as the device owner, protects the app the permission came from and hands the permission back only to it.</string>
+
+    <string name="pref_device_owner_title">Device owner permission</string>
+    <string name="pref_device_owner_summary">Hold, hand over or receive the device owner permission</string>
+
+    <string name="device_owner_status_title">Status</string>
+    <string name="device_owner_status_held">Aurora Store is the device owner</string>
+    <string name="device_owner_status_not_held">Aurora Store is not the device owner</string>
+    <string name="device_owner_mode_standard">Mode: unrestricted</string>
+    <string name="device_owner_mode_protected">Mode: protected</string>
+    <string name="device_owner_source">Received from %1$s</string>
+    <string name="device_owner_source_unknown">Not received from another app</string>
+    <string name="device_owner_uninstall_blocked">%1$s is protected from being uninstalled</string>
+    <string name="device_owner_user_control_locked">%1$s cannot be force stopped or cleared by the user</string>
+    <string name="device_owner_user_control_locked_global">This Android version cannot restrict a single app, so no app can be force stopped or cleared by the user</string>
+
+    <string name="device_owner_transfer_title">Hand the permission over</string>
+    <string name="device_owner_transfer_desc">Pick an app supporting the transfer. Aurora Store loses the permission right away and cannot take it back on its own.</string>
+    <string name="device_owner_transfer_locked_desc">The permission was received in protected mode, so it can only be handed back to %1$s.</string>
+    <string name="device_owner_transfer_empty">No app supporting the transfer was found</string>
+    <string name="device_owner_transfer_unsupported">Transferring the device owner permission needs Android 9 or above</string>
+    <string name="device_owner_transfer_locked">The permission can only be handed back to %1$s</string>
+    <string name="device_owner_transfer_confirm">Hand the device owner permission over to %1$s?</string>
+    <string name="device_owner_transfer_success">Handed the device owner permission over to %1$s</string>
+    <string name="device_owner_transfer_action">Hand over</string>
+
+    <string name="device_owner_receive_title">Receive the permission</string>
+    <string name="device_owner_receive_desc">Pick one of these components in the app currently holding the device owner permission to have it handed over to Aurora Store.</string>
+    <string name="device_owner_receive_standard">Unrestricted: the app handing the permission over is left untouched and the permission can be handed over to any app afterwards.</string>
+    <string name="device_owner_receive_protected">Protected: the app handing the permission over is blocked from being uninstalled and from user control, and the permission can only be handed back to it.</string>
+    <string name="device_owner_setup_title">Set up over ADB</string>
+    <string name="device_owner_setup_desc">With no account set up on the device, run one of these commands to make Aurora Store the device owner.</string>
+
+    <string name="device_owner_release_action">Give up the permission</string>
+    <string name="device_owner_release_desc">Aurora Store stops being the device owner and every protection it enforces is dropped. Proceed?</string>
+    <string name="device_owner_copied">Copied to clipboard</string>
 </resources>

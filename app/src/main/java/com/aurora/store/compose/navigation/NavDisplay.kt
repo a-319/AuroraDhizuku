@@ -29,6 +29,7 @@ import com.aurora.store.compose.ui.downloads.DownloadsScreen
 import com.aurora.store.compose.ui.favourite.FavouriteScreen
 import com.aurora.store.compose.ui.installed.InstalledScreen
 import com.aurora.store.compose.ui.onboarding.OnboardingScreen
+import com.aurora.store.compose.ui.preferences.deviceowner.DeviceOwnerScreen
 import com.aurora.store.compose.ui.preferences.installation.InstallerScreen
 import com.aurora.store.compose.ui.search.SearchScreen
 import com.aurora.store.compose.ui.spoof.SpoofScreen
@@ -145,6 +146,10 @@ fun NavDisplay(startDestination: NavKey) {
 
             entry<Screen.Installer> {
                 InstallerScreen(onNavigateUp = ::onNavigateUp)
+            }
+
+            entry<Screen.DeviceOwner> {
+                DeviceOwnerScreen(onNavigateUp = ::onNavigateUp)
             }
 
             entry<Screen.Installed> {
