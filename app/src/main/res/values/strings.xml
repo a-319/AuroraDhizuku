@@ -595,6 +595,8 @@
     <string name="device_owner_transfer_empty">No app supporting the transfer was found</string>
     <string name="device_owner_transfer_unsupported">Transferring the device owner permission needs Android 9 or above</string>
     <string name="device_owner_transfer_locked">The permission can only be handed back to %1$s</string>
+    <string name="device_owner_transfer_locked_unknown">The permission was received in protected mode but the app it came from could not be identified, so it cannot be handed over to anyone</string>
+    <string name="device_owner_transfer_cleanup_failed">The protection in place could not be removed, so the permission was not handed over</string>
     <string name="device_owner_transfer_confirm">Hand the device owner permission over to %1$s?</string>
     <string name="device_owner_transfer_success">Handed the device owner permission over to %1$s</string>
     <string name="device_owner_transfer_action">Hand over</string>

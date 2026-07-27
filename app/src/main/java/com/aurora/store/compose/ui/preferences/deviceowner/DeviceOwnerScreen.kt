@@ -212,13 +212,20 @@ private fun ScreenContent(
                     }
                 }
 
+                // Protected mode without a known source keeps the ownership where it is
+                val lockedToUnknown = state.isLockedToSource && protectedAppLabel == null
+
                 item(key = "transfer") {
                     Header(
                         title = stringResource(R.string.device_owner_transfer_title),
                         subtitle = when {
+                            lockedToUnknown -> {
+                                stringResource(R.string.device_owner_transfer_locked_unknown)
+                            }
+
                             state.isLockedToSource -> stringResource(
                                 R.string.device_owner_transfer_locked_desc,
-                                state.sourceAppLabel ?: state.sourcePackageName.orEmpty()
+                                protectedAppLabel ?: state.sourcePackageName.orEmpty()
                             )
 
                             else -> stringResource(R.string.device_owner_transfer_desc)
@@ -231,13 +238,17 @@ private fun ScreenContent(
                         Info(
                             title = AnnotatedString(
                                 text = when {
-                                    state.isTransferSupported -> {
-                                        stringResource(R.string.device_owner_transfer_empty)
-                                    }
-
-                                    else -> {
+                                    !state.isTransferSupported -> {
                                         stringResource(R.string.device_owner_transfer_unsupported)
                                     }
+
+                                    lockedToUnknown -> {
+                                        stringResource(
+                                            R.string.device_owner_transfer_locked_unknown
+                                        )
+                                    }
+
+                                    else -> stringResource(R.string.device_owner_transfer_empty)
                                 }
                             )
                         )

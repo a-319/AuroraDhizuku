@@ -143,15 +143,27 @@ class DeviceOwnerInstaller @Inject constructor(
         }
     }
 
+    private var isCallbackRegistered = false
+
     init {
+        ensureSessionCallback()
+    }
+
+    /**
+     * Registers the session callback once we are the device owner. Ownership can also be handed
+     * over to us while we are running, so this cannot be done in [init] alone.
+     */
+    private fun ensureSessionCallback() {
         // Only register callback if device owner to avoid unnecessary overhead
-        if (isDeviceOwner(context)) {
-            runOnUiThread { packageInstaller.registerSessionCallback(callback) }
-        }
+        if (isCallbackRegistered || !isDeviceOwner(context)) return
+
+        isCallbackRegistered = true
+        runOnUiThread { packageInstaller.registerSessionCallback(callback) }
     }
 
     override fun install(download: Download) {
         super.install(download)
+        ensureSessionCallback()
 
         val sessionSet =
             enqueuedSessions.find { set -> set.any { it.packageName == download.packageName } }

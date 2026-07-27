@@ -26,6 +26,7 @@ import com.aurora.store.data.receiver.DeviceOwnerReceiver
 import com.aurora.store.data.receiver.ProtectedDeviceOwnerReceiver
 import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_GLOBAL_LOCK
 import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_LAST_OWNER
+import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_RECEIVED
 import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_SOURCE
 
 /**
@@ -106,10 +107,18 @@ object DeviceOwnerManager {
     }
 
     /**
-     * Whether the ownership may only be handed back to the app it was received from
+     * Whether the ownership was handed over to us by another app rather than set up directly
+     */
+    private fun isReceived(context: Context): Boolean =
+        isDeviceOwner(context) && Preferences.getBoolean(context, PREFERENCE_DEVICE_OWNER_RECEIVED)
+
+    /**
+     * Whether the ownership may only be handed back to the app it was received from. Holds even
+     * when that app could not be identified, in which case the ownership stays put: handing it
+     * to anyone else is exactly what the protecting admin was picked to prevent.
      */
     fun isLockedToSource(context: Context): Boolean =
-        getMode(context) == DeviceOwnerMode.PROTECTED && getSourcePackageName(context) != null
+        getMode(context) == DeviceOwnerMode.PROTECTED && isReceived(context)
 
     /**
      * Lists apps declaring a device admin receiver which supports receiving the ownership.
@@ -198,11 +207,22 @@ object DeviceOwnerManager {
 
         val sourcePackageName = getSourcePackageName(context)
         val isProtecting = getMode(context) == DeviceOwnerMode.PROTECTED
-        if (isProtecting && sourcePackageName != null && target.packageName != sourcePackageName) {
-            error(context.getString(R.string.device_owner_transfer_locked, sourcePackageName))
+        if (isLockedToSource(context) && target.packageName != sourcePackageName) {
+            error(
+                when (sourcePackageName) {
+                    null -> context.getString(R.string.device_owner_transfer_locked_unknown)
+                    else -> {
+                        context.getString(R.string.device_owner_transfer_locked, sourcePackageName)
+                    }
+                }
+            )
         }
 
-        clearProtections(context, admin)
+        // Policies survive the transfer, so anything we cannot drop now is inherited by the new
+        // owner while we lose the authority to ever remove it. Rather stay the owner.
+        if (!clearProtections(context, admin)) {
+            error(context.getString(R.string.device_owner_transfer_cleanup_failed))
+        }
 
         val bundle = PersistableBundle().apply {
             putString(EXTRA_SOURCE_PACKAGE, context.packageName)
@@ -219,6 +239,7 @@ object DeviceOwnerManager {
 
         Log.i(TAG, "Handed the ownership over to ${target.componentName}")
         Preferences.remove(context, PREFERENCE_DEVICE_OWNER_SOURCE)
+        Preferences.remove(context, PREFERENCE_DEVICE_OWNER_RECEIVED)
         context.save(PREFERENCE_DEVICE_OWNER_LAST_OWNER, target.packageName)
     }
 
@@ -233,6 +254,7 @@ object DeviceOwnerManager {
 
         Log.i(TAG, "Received the ownership on $admin from ${sourcePackageName ?: "an unknown app"}")
 
+        context.save(PREFERENCE_DEVICE_OWNER_RECEIVED, true)
         if (sourcePackageName != null) {
             context.save(PREFERENCE_DEVICE_OWNER_SOURCE, sourcePackageName)
         } else {
@@ -281,9 +303,12 @@ object DeviceOwnerManager {
 
     /**
      * Drops every protection put in place by [applyProtections]
+     * @return whether every protection is gone, callers handing the ownership over have to stop
+     * when it is not: what is left behind cannot be dropped by us anymore
      */
-    fun clearProtections(context: Context, admin: ComponentName) {
-        val policyManager = getPolicyManager(context) ?: return
+    fun clearProtections(context: Context, admin: ComponentName): Boolean {
+        val policyManager = getPolicyManager(context) ?: return false
+        var cleared = true
 
         val packageName = Preferences.getString(context, PREFERENCE_DEVICE_OWNER_SOURCE)
         if (packageName.isNotBlank()) {
@@ -291,6 +316,7 @@ object DeviceOwnerManager {
                 policyManager.setUninstallBlocked(admin, packageName, false)
             } catch (exception: Exception) {
                 Log.e(TAG, "Failed to unblock uninstallation of $packageName", exception)
+                cleared = false
             }
         }
 
@@ -299,6 +325,7 @@ object DeviceOwnerManager {
                 policyManager.setUserControlDisabledPackages(admin, emptyList())
             } catch (exception: Exception) {
                 Log.e(TAG, "Failed to hand user control back", exception)
+                cleared = false
             }
         }
 
@@ -308,8 +335,11 @@ object DeviceOwnerManager {
                 context.save(PREFERENCE_DEVICE_OWNER_GLOBAL_LOCK, false)
             } catch (exception: Exception) {
                 Log.e(TAG, "Failed to hand user control back to every app", exception)
+                cleared = false
             }
         }
+
+        return cleared
     }
 
     /**
@@ -323,6 +353,7 @@ object DeviceOwnerManager {
         policyManager.clearDeviceOwnerApp(context.packageName)
 
         Preferences.remove(context, PREFERENCE_DEVICE_OWNER_SOURCE)
+        Preferences.remove(context, PREFERENCE_DEVICE_OWNER_RECEIVED)
         Preferences.remove(context, PREFERENCE_DEVICE_OWNER_GLOBAL_LOCK)
     }
 
