@@ -27,6 +27,7 @@ import com.aurora.store.data.receiver.ProtectedDeviceOwnerReceiver
 import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_GLOBAL_LOCK
 import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_LAST_OWNER
 import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_RECEIVED
+import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_REFUSED
 import com.aurora.store.util.Preferences.PREFERENCE_DEVICE_OWNER_SOURCE
 
 /**
@@ -254,6 +255,17 @@ object DeviceOwnerManager {
 
         Log.i(TAG, "Received the ownership on $admin from ${sourcePackageName ?: "an unknown app"}")
 
+        // The protecting admin exists to guard the app the ownership came from and to hand it
+        // back to it, neither of which is possible without knowing which app that is. A transfer
+        // cannot be vetoed, so the closest thing to turning it down is not keeping it.
+        if (admin == getProtectedAdmin(context) && sourcePackageName == null) {
+            Log.w(TAG, "Turning the ownership down, the app it came from is unknown")
+            forceReleaseOwnership(context)
+            context.save(PREFERENCE_DEVICE_OWNER_REFUSED, true)
+            return
+        }
+
+        Preferences.remove(context, PREFERENCE_DEVICE_OWNER_REFUSED)
         context.save(PREFERENCE_DEVICE_OWNER_RECEIVED, true)
         if (sourcePackageName != null) {
             context.save(PREFERENCE_DEVICE_OWNER_SOURCE, sourcePackageName)
@@ -343,9 +355,28 @@ object DeviceOwnerManager {
     }
 
     /**
-     * Gives up the device owner permission entirely
+     * Whether the device owner permission can be given up as-is. Ownership received in the
+     * protected mode has exactly one way out, and that is handing it back to the app it came
+     * from. Held in any other way, giving it up is always possible.
      */
-    fun releaseOwnership(context: Context) {
+    fun canReleaseOwnership(context: Context): Boolean =
+        !(isLockedToSource(context) && getSourcePackageName(context) != null)
+
+    /**
+     * Gives up the device owner permission entirely
+     * @return whether the permission was given up, see [canReleaseOwnership]
+     */
+    fun releaseOwnership(context: Context): Boolean {
+        if (!canReleaseOwnership(context)) {
+            Log.i(TAG, "Refused to give up the ownership held in the protected mode")
+            return false
+        }
+
+        forceReleaseOwnership(context)
+        return true
+    }
+
+    private fun forceReleaseOwnership(context: Context) {
         val policyManager = getPolicyManager(context) ?: return
         getActiveAdmin(context)?.let { clearProtections(context, it) }
 
@@ -355,6 +386,16 @@ object DeviceOwnerManager {
         Preferences.remove(context, PREFERENCE_DEVICE_OWNER_SOURCE)
         Preferences.remove(context, PREFERENCE_DEVICE_OWNER_RECEIVED)
         Preferences.remove(context, PREFERENCE_DEVICE_OWNER_GLOBAL_LOCK)
+    }
+
+    /**
+     * Reads and forgets the notice about an ownership transfer that was turned down
+     */
+    fun consumeRefusalNotice(context: Context): Boolean {
+        val wasRefused = Preferences.getBoolean(context, PREFERENCE_DEVICE_OWNER_REFUSED)
+        if (wasRefused) Preferences.remove(context, PREFERENCE_DEVICE_OWNER_REFUSED)
+
+        return wasRefused
     }
 
     /**
@@ -384,6 +425,7 @@ object DeviceOwnerManager {
             sourceAppLabel = sourcePackageName?.let { getAppLabel(context, it) },
             isTransferSupported = isPAndAbove,
             isLockedToSource = isLockedToSource,
+            canRelease = isDeviceOwner && canReleaseOwnership(context),
             isUninstallBlocked = isUninstallBlocked(context, sourcePackageName),
             isUserControlLockedGlobally = isDeviceOwner &&
                 Preferences.getBoolean(context, PREFERENCE_DEVICE_OWNER_GLOBAL_LOCK),

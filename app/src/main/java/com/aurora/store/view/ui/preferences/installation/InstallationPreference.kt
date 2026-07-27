@@ -19,12 +19,10 @@
 
 package com.aurora.store.view.ui.preferences.installation
 
-import android.app.admin.DevicePolicyManager
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.getSystemService
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -59,10 +57,10 @@ class InstallationPreference : PreferenceFragmentCompat() {
         }
 
         findPreference<Preference>(PREFERENCE_INSTALLATION_DEVICE_OWNER)?.apply {
-            val packageName = context.packageName
-            val devicePolicyManager = context.getSystemService<DevicePolicyManager>()
+            // Ownership received in the protected mode can only be handed back, never given up
+            isVisible = DeviceOwnerManager.isDeviceOwner(context) &&
+                DeviceOwnerManager.canReleaseOwnership(context)
 
-            isVisible = devicePolicyManager?.isDeviceOwnerApp(packageName) ?: false
             setOnPreferenceClickListener {
                 context.showDialog(
                     context.getString(R.string.pref_clear_device_owner_title),

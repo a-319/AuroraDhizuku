@@ -610,5 +610,8 @@
 
     <string name="device_owner_release_action">Give up the permission</string>
     <string name="device_owner_release_desc">Aurora Store stops being the device owner and every protection it enforces is dropped. Proceed?</string>
+    <string name="device_owner_release_blocked">The permission was received in protected mode, so the only way out is handing it back to %1$s</string>
+    <string name="device_owner_source_cannot_receive">%1$s cannot receive the permission back, and protected mode allows nothing else. Only a factory reset can undo this.</string>
+    <string name="device_owner_transfer_refused">A transfer to protected mode was turned down because the app it came from could not be identified, and the permission was given up</string>
     <string name="device_owner_copied">Copied to clipboard</string>
 </resources>

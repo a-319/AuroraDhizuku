@@ -14,8 +14,10 @@ package com.aurora.store.data.model
  * @param sourceAppLabel Label of [sourcePackageName], falls back to the package name itself
  * @param isTransferSupported Whether this Android version can transfer the ownership at all
  * @param isLockedToSource Whether the ownership can only be handed back to [sourcePackageName]
+ * @param canRelease Whether the permission can be given up instead of handed back
  * @param isUninstallBlocked Whether [sourcePackageName] is currently protected from uninstallation
  * @param isUserControlLockedGlobally Whether user control had to be taken away from every app
+ * @param wasTransferRefused Whether a transfer was turned down since this was last looked at
  * @param targets Apps the ownership can currently be handed over to
  */
 data class DeviceOwnerState(
@@ -27,7 +29,9 @@ data class DeviceOwnerState(
     val sourceAppLabel: String? = null,
     val isTransferSupported: Boolean = false,
     val isLockedToSource: Boolean = false,
+    val canRelease: Boolean = false,
     val isUninstallBlocked: Boolean = false,
     val isUserControlLockedGlobally: Boolean = false,
+    val wasTransferRefused: Boolean = false,
     val targets: List<DeviceOwnerTarget> = emptyList()
 )

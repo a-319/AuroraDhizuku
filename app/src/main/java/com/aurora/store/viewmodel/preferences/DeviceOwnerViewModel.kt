@@ -44,7 +44,9 @@ class DeviceOwnerViewModel @Inject constructor(
             _state.value = withContext(Dispatchers.IO) {
                 // Remember whoever holds the permission, we cannot ask once it is handed over
                 DeviceOwnerManager.cacheCurrentOwner(context)
-                DeviceOwnerManager.getState(context)
+                DeviceOwnerManager.getState(context).copy(
+                    wasTransferRefused = DeviceOwnerManager.consumeRefusalNotice(context)
+                )
             }
         }
     }
@@ -73,10 +75,17 @@ class DeviceOwnerViewModel @Inject constructor(
 
     fun releaseOwnership() {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            val released = withContext(Dispatchers.IO) {
                 runCatching { DeviceOwnerManager.releaseOwnership(context) }
                     .onFailure { Log.e(TAG, "Failed to give up the device owner permission", it) }
+                    .getOrDefault(false)
             }
+
+            if (!released) {
+                val label = _state.value.sourceAppLabel.orEmpty()
+                _message.emit(context.getString(R.string.device_owner_release_blocked, label))
+            }
+
             refresh()
         }
     }

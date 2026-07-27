@@ -173,6 +173,16 @@ private fun ScreenContent(
                 )
             }
 
+            if (state.wasTransferRefused) {
+                item(key = "refused") {
+                    Info(
+                        title = AnnotatedString(
+                            text = stringResource(R.string.device_owner_transfer_refused)
+                        )
+                    )
+                }
+            }
+
             if (state.isDeviceOwner) {
                 item(key = "source") {
                     val label = state.sourceAppLabel
@@ -265,14 +275,38 @@ private fun ScreenContent(
                     }
                 }
 
-                item(key = "release") {
-                    TextButton(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = dimensionResource(R.dimen.padding_small)),
-                        onClick = onRelease
-                    ) {
-                        Text(text = stringResource(R.string.device_owner_release_action))
+                // Protected mode has exactly one way out, and that is handing it back
+                if (state.canRelease) {
+                    item(key = "release") {
+                        TextButton(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = dimensionResource(R.dimen.padding_small)),
+                            onClick = onRelease
+                        ) {
+                            Text(text = stringResource(R.string.device_owner_release_action))
+                        }
+                    }
+                } else if (protectedAppLabel != null) {
+                    item(key = "release_blocked") {
+                        Info(
+                            title = AnnotatedString(
+                                text = stringResource(
+                                    R.string.device_owner_release_blocked,
+                                    protectedAppLabel
+                                )
+                            ),
+                            description = when {
+                                state.targets.isEmpty() -> AnnotatedString(
+                                    text = stringResource(
+                                        R.string.device_owner_source_cannot_receive,
+                                        protectedAppLabel
+                                    )
+                                )
+
+                                else -> null
+                            }
+                        )
                     }
                 }
             } else {
