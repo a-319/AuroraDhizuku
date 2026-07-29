@@ -86,27 +86,25 @@ class UpdatesFragment : BaseFragment<FragmentUpdatesBinding>() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.updates
-                .combine(viewModel.downloadsList) { uList, dList ->
-                    uList?.associateWith { a ->
-                        dList.find {
-                            it.packageName == a.packageName && it.versionCode == a.versionCode
-                        }
+            combine(
+                viewModel.updates,
+                viewModel.downloadsList,
+                viewModel.fetchingUpdates
+            ) { uList, dList, isFetching ->
+                val map = uList?.associateWith { a ->
+                    dList.find {
+                        it.packageName == a.packageName && it.versionCode == a.versionCode
                     }
-                }.collectLatest { map ->
-                    updateController(map)
-                    viewModel.updateAllEnqueued = map?.values?.all {
-                        it?.isRunning == true
-                    } ?: false
                 }
-        }
+                map to isFetching
+            }.collectLatest { (map, isFetching) ->
+                binding.swipeRefreshLayout.isRefreshing = isFetching
+                viewModel.updateAllEnqueued = map?.values?.all {
+                    it?.isRunning == true
+                } ?: false
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.fetchingUpdates.collect {
-                binding.swipeRefreshLayout.isRefreshing = it
-                if (it && viewModel.updates.value.isNullOrEmpty()) {
-                    updateController(emptyMap())
-                }
+                // Avoid claiming there are no updates while we are still looking for them
+                updateController(if (isFetching && map.isNullOrEmpty()) null else map)
             }
         }
 
@@ -117,6 +115,14 @@ class UpdatesFragment : BaseFragment<FragmentUpdatesBinding>() {
         binding.searchFab.setOnClickListener {
             requireContext().navigate(Screen.Search)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // Refresh the list on visit, otherwise it keeps showing stale data from the last
+        // background check until the user manually refreshes it.
+        viewModel.fetchUpdatesIfStale()
     }
 
     private fun updateController(appList: Map<Update, Download?>?) {
