@@ -35,6 +35,8 @@ object Constants {
     const val PLEXUS_API_URL = "https://plexus.techlore.tech/api/v1/apps"
     const val PLEXUS_SEARCH_URL = "https://plexus.techlore.tech/?q="
 
+    const val TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
+
     const val SHARE_URL = "https://play.google.com/store/apps/details?id="
 
     const val UPDATE_URL_STABLE = "https://gitlab.com/AuroraOSS/AuroraStore/raw/master/updates.json"

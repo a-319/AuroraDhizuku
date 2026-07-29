@@ -14,9 +14,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
@@ -25,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -40,6 +37,8 @@ import com.aurora.store.compose.composable.TopAppBar
 import com.aurora.store.compose.composable.app.AppListItem
 import com.aurora.store.compose.preview.AppPreviewProvider
 import com.aurora.store.compose.preview.PreviewTemplate
+import com.aurora.store.compose.ui.details.composable.Description
+import com.aurora.store.data.model.TranslationState
 import com.aurora.store.viewmodel.details.AppDetailsViewModel
 import com.aurora.store.viewmodel.details.MoreViewModel
 import java.util.Locale
@@ -59,12 +58,15 @@ fun MoreScreen(
 ) {
     val app by appDetailsViewModel.app.collectAsStateWithLifecycle()
     val dependencies by moreViewModel.dependentApps.collectAsStateWithLifecycle()
+    val translationState by moreViewModel.translationState.collectAsStateWithLifecycle()
 
     ScreenContent(
         app = app!!,
         dependencies = dependencies,
+        translationState = translationState,
         onNavigateUp = onNavigateUp,
-        onNavigateToAppDetails = onNavigateToAppDetails
+        onNavigateToAppDetails = onNavigateToAppDetails,
+        onToggleTranslation = { moreViewModel.toggleTranslation(app!!.description) }
     )
 }
 
@@ -72,8 +74,10 @@ fun MoreScreen(
 private fun ScreenContent(
     app: App,
     dependencies: List<App>? = null,
+    translationState: TranslationState = TranslationState.Original,
     onNavigateUp: () -> Unit = {},
     onNavigateToAppDetails: (packageName: String) -> Unit = {},
+    onToggleTranslation: () -> Unit = {},
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfo()
 ) {
     val topAppBarTitle = when {
@@ -97,13 +101,10 @@ private fun ScreenContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.margin_medium))
         ) {
-            Header(title = stringResource(R.string.details_description))
-            Text(
-                modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
-                text = AnnotatedString.fromHtml(
-                    htmlString = app.description
-                ),
-                style = MaterialTheme.typography.bodyMedium
+            Description(
+                description = app.description,
+                translationState = translationState,
+                onToggleTranslation = onToggleTranslation
             )
 
             if (dependencies != null) {

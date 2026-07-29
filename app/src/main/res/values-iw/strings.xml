@@ -120,6 +120,11 @@
     <string name="action_finish">סיום</string>
     <string name="action_granted">הוענקה</string>
     <string name="details_description">תיאור</string>
+    <string name="details_description_translate">תרגום</string>
+    <string name="details_description_translating">מתרגם…</string>
+    <string name="details_description_original">הצגת המקור</string>
+    <string name="details_description_translated">תורגם על ידי Google</string>
+    <string name="details_description_translate_failed">לא ניתן לתרגם את התיאור</string>
     <string name="details_free">בחינם</string>
     <string name="menu_disclaimer">כתב ויתור</string>
     <string name="tab_for_you">בשבילך</string>

@@ -12,6 +12,9 @@ import androidx.lifecycle.viewModelScope
 import com.aurora.extensions.TAG
 import com.aurora.gplayapi.data.models.App
 import com.aurora.gplayapi.helpers.AppDetailsHelper
+import com.aurora.store.data.model.Translation
+import com.aurora.store.data.model.TranslationState
+import com.aurora.store.data.providers.TranslationProvider
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -24,7 +27,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel(assistedFactory = MoreViewModel.Factory::class)
 class MoreViewModel @AssistedInject constructor(
     @Assisted private val dependencies: List<String>,
-    private val appDetailsHelper: AppDetailsHelper
+    private val appDetailsHelper: AppDetailsHelper,
+    private val translationProvider: TranslationProvider
 ) : ViewModel() {
 
     @AssistedFactory
@@ -35,8 +39,52 @@ class MoreViewModel @AssistedInject constructor(
     private val _dependentApps = MutableStateFlow<List<App>?>(emptyList())
     val dependentApps = _dependentApps.asStateFlow()
 
+    private val _translationState = MutableStateFlow<TranslationState>(TranslationState.Original)
+    val translationState = _translationState.asStateFlow()
+
+    // Kept around so that toggling back and forth doesn't hit the network again
+    private var translation: Translation? = null
+
     init {
         fetchDependencies()
+    }
+
+    /**
+     * Toggles between the original and the translated description, fetching the translation on
+     * the first request
+     * @param description Description of the app, as served by Google Play
+     */
+    fun toggleTranslation(description: String) {
+        when (_translationState.value) {
+            is TranslationState.InProgress -> return
+
+            is TranslationState.Translated -> {
+                _translationState.value = TranslationState.Original
+            }
+
+            else -> {
+                val cachedTranslation = translation
+                if (cachedTranslation != null) {
+                    _translationState.value = TranslationState.Translated(cachedTranslation)
+                } else {
+                    fetchTranslation(description)
+                }
+            }
+        }
+    }
+
+    private fun fetchTranslation(description: String) {
+        _translationState.value = TranslationState.InProgress
+        viewModelScope.launch(Dispatchers.IO) {
+            _translationState.value = try {
+                translationProvider.translate(description)
+                    .also { translation = it }
+                    .let { TranslationState.Translated(it) }
+            } catch (exception: Exception) {
+                Log.e(TAG, "Failed to translate description", exception)
+                TranslationState.Failed
+            }
+        }
     }
 
     private fun fetchDependencies() {
