@@ -30,6 +30,7 @@ import com.aurora.store.util.NotificationUtil
 import com.aurora.store.util.PackageUtil
 import com.aurora.store.util.Preferences
 import com.aurora.store.util.Preferences.PREFERENCE_UPDATES_AUTO
+import com.aurora.store.util.Preferences.PREFERENCE_UPDATES_LAST_CHECK
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.Locale
@@ -102,6 +103,8 @@ class UpdateWorker @AssistedInject constructor(
             val updates = checkUpdates()
                 .also { updateDao.insertUpdates(it) }
                 .filter { if (!isExtendedUpdateEnabled) it.hasValidCert else true }
+
+            Preferences.putLong(context, PREFERENCE_UPDATES_LAST_CHECK, System.currentTimeMillis())
 
             if (updates.isEmpty() || updateMode == UpdateMode.CHECK_ONLY) {
                 Log.i(TAG, "Found ${updates.size} updates")

@@ -45,6 +45,10 @@ class UpdatesViewModel @Inject constructor(
         updateHelper.checkUpdatesNow()
     }
 
+    fun fetchUpdatesIfStale() {
+        updateHelper.checkUpdatesIfStale()
+    }
+
     fun download(update: Update) {
         viewModelScope.launch { downloadHelper.enqueueUpdate(update) }
     }

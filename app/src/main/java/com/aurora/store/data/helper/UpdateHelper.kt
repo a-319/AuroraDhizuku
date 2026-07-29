@@ -17,6 +17,7 @@ import com.aurora.store.AuroraApp
 import com.aurora.store.data.event.BusEvent
 import com.aurora.store.data.event.InstallerEvent
 import com.aurora.store.data.model.UpdateMode
+import com.aurora.store.data.providers.AccountProvider
 import com.aurora.store.data.room.update.UpdateDao
 import com.aurora.store.data.work.UpdateWorker
 import com.aurora.store.util.Preferences
@@ -24,6 +25,7 @@ import com.aurora.store.util.Preferences.PREFERENCES_UPDATES_RESTRICTIONS_BATTER
 import com.aurora.store.util.Preferences.PREFERENCES_UPDATES_RESTRICTIONS_IDLE
 import com.aurora.store.util.Preferences.PREFERENCES_UPDATES_RESTRICTIONS_METERED
 import com.aurora.store.util.Preferences.PREFERENCE_UPDATES_CHECK_INTERVAL
+import com.aurora.store.util.Preferences.PREFERENCE_UPDATES_LAST_CHECK
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
 import java.util.concurrent.TimeUnit.HOURS
@@ -50,6 +52,13 @@ class UpdateHelper @Inject constructor(
 
         private const val UPDATE_WORKER = "UPDATE_WORKER"
         private const val EXPEDITED_UPDATE_WORKER = "EXPEDITED_UPDATE_WORKER"
+
+        /**
+         * Time after which the cached updates are considered stale and are refreshed
+         * automatically when the user visits the updates section.
+         * @see checkUpdatesIfStale
+         */
+        private val STALE_UPDATES_THRESHOLD = MINUTES.toMillis(30)
 
         fun getAutoUpdateWork(context: Context): PeriodicWorkRequest {
             val updateCheckInterval = Preferences.getInteger(
@@ -85,6 +94,10 @@ class UpdateHelper @Inject constructor(
 
     private val isExtendedUpdateEnabled
         get() = Preferences.getBoolean(context, Preferences.PREFERENCE_UPDATES_EXTENDED)
+
+    private var lastUpdateCheck: Long
+        get() = Preferences.getLong(context, PREFERENCE_UPDATES_LAST_CHECK)
+        set(value) = Preferences.putLong(context, PREFERENCE_UPDATES_LAST_CHECK, value)
 
     val updates = updateDao.updates()
         .map { list -> if (!isExtendedUpdateEnabled) list.filter { it.hasValidCert } else list }
@@ -124,6 +137,8 @@ class UpdateHelper @Inject constructor(
      * Checks for updates using an expedited worker
      */
     fun checkUpdatesNow() {
+        lastUpdateCheck = System.currentTimeMillis()
+
         val inputData = Data.Builder()
             .putInt(UPDATE_MODE, UpdateMode.CHECK_ONLY.ordinal)
             .build()
@@ -136,6 +151,24 @@ class UpdateHelper @Inject constructor(
 
         WorkManager.getInstance(context)
             .enqueueUniqueWork(EXPEDITED_UPDATE_WORKER, ExistingWorkPolicy.KEEP, work)
+    }
+
+    /**
+     * Checks for updates if the cached ones are older than [STALE_UPDATES_THRESHOLD], allowing
+     * the updates section to stay fresh without requiring the user to refresh it manually.
+     * @see checkUpdatesNow
+     */
+    fun checkUpdatesIfStale() {
+        if (!AccountProvider.isLoggedIn(context)) return
+
+        // Negative values mean the clock went backwards, check for updates in that case
+        val elapsedTime = System.currentTimeMillis() - lastUpdateCheck
+        if (elapsedTime in 0..STALE_UPDATES_THRESHOLD) {
+            Log.i(TAG, "Skipping updates check, last check was $elapsedTime ms ago")
+            return
+        }
+
+        checkUpdatesNow()
     }
 
     /**
