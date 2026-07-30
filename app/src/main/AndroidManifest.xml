@@ -134,6 +134,22 @@
             </intent-filter>
         </activity>
 
+        <!-- Translates a text another app asks us to translate for it, which is never offered
+             unasked and therefore needs no opt-in -->
+        <activity
+            android:name=".TranslateRequestActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/translate_title"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Translucent">
+            <intent-filter>
+                <action android:name="android.intent.action.TRANSLATE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- Notification Action (Download Complete) -->
         <activity
             android:name=".data.activity.InstallActivity"

@@ -52,11 +52,15 @@ private const val SCRIM_ALPHA = 0.32F
  *
  * @param text Text to translate
  * @param onDismiss Callback when the translation is dismissed
+ * @param canReturnTranslation Whether the app the text came from takes the translation back
+ * @param onReturnTranslation Callback to hand the translation over to that app
  */
 @Composable
 fun TranslateScreen(
     text: String,
     onDismiss: () -> Unit,
+    canReturnTranslation: Boolean = false,
+    onReturnTranslation: (String) -> Unit = {},
     viewModel: TranslateViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -66,6 +70,8 @@ fun TranslateScreen(
     ScreenContent(
         text = text,
         state = state,
+        canReturnTranslation = canReturnTranslation,
+        onReturnTranslation = onReturnTranslation,
         onDismiss = onDismiss,
         onRetry = { viewModel.translate(text) }
     )
@@ -75,6 +81,8 @@ fun TranslateScreen(
 private fun ScreenContent(
     text: String,
     state: TextTranslationState = TextTranslationState.InProgress,
+    canReturnTranslation: Boolean = false,
+    onReturnTranslation: (String) -> Unit = {},
     onDismiss: () -> Unit = {},
     onRetry: () -> Unit = {}
 ) {
@@ -130,6 +138,12 @@ private fun ScreenContent(
                     if (state is TextTranslationState.Translated) {
                         TextButton(onClick = { context.copyToClipBoard(state.text) }) {
                             Text(text = stringResource(R.string.action_copy))
+                        }
+
+                        if (canReturnTranslation) {
+                            TextButton(onClick = { onReturnTranslation(state.text) }) {
+                                Text(text = stringResource(R.string.action_use_translation))
+                            }
                         }
                     }
 
@@ -213,7 +227,8 @@ private fun TranslateScreenPreview() {
             state = TextTranslationState.Translated(
                 text = "Un client FOSS non officiel de Google Play",
                 sourceLanguage = "en"
-            )
+            ),
+            canReturnTranslation = true
         )
     }
 }
