@@ -49,4 +49,12 @@
         app:key="PREFERENCE_FOR_YOU"
         app:summary="@string/pref_ui_no_for_you_desc"
         app:title="@string/pref_ui_no_for_you" />
+
+    <SwitchPreferenceCompat
+        app:defaultValue="false"
+        app:iconSpaceReserved="false"
+        app:key="PREFERENCE_TRANSLATE_AUTO"
+        app:singleLineTitle="false"
+        app:summary="@string/pref_ui_translate_auto_desc"
+        app:title="@string/pref_ui_translate_auto" />
 </androidx.preference.PreferenceScreen>

@@ -29,7 +29,6 @@ import com.aurora.store.R
 import com.aurora.store.compose.composable.Header
 import com.aurora.store.compose.preview.AppPreviewProvider
 import com.aurora.store.compose.preview.PreviewTemplate
-import com.aurora.store.data.model.Translation
 import com.aurora.store.data.model.TranslationState
 
 /**
@@ -47,18 +46,7 @@ fun Description(
     translationState: TranslationState = TranslationState.Original,
     onToggleTranslation: () -> Unit = {}
 ) {
-    val translation = (translationState as? TranslationState.Translated)?.translation
-
     Header(title = stringResource(R.string.details_description))
-    Text(
-        modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
-        text = when (translation) {
-            // The translated text is plain, all markup is lost on the way through the translator
-            null -> AnnotatedString.fromHtml(htmlString = description)
-            else -> AnnotatedString(text = translation.text)
-        },
-        style = MaterialTheme.typography.bodyMedium
-    )
 
     if (description.isNotBlank()) {
         TranslateAction(
@@ -66,6 +54,16 @@ fun Description(
             onToggleTranslation = onToggleTranslation
         )
     }
+
+    Text(
+        modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
+        text = when (translationState) {
+            // The translated text is plain, all markup is lost on the way through the translator
+            is TranslationState.Translated -> AnnotatedString(text = translationState.description)
+            else -> AnnotatedString.fromHtml(htmlString = description)
+        },
+        style = MaterialTheme.typography.bodyMedium
+    )
 }
 
 /**
@@ -148,7 +146,9 @@ private fun DescriptionTranslatedPreview(@PreviewParameter(AppPreviewProvider::c
             Description(
                 description = app.description,
                 translationState = TranslationState.Translated(
-                    translation = Translation(text = app.description, sourceLanguage = "en")
+                    description = app.description,
+                    shortDescription = app.shortDescription,
+                    sourceLanguage = "en"
                 )
             )
         }

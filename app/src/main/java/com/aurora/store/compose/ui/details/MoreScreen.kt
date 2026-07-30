@@ -58,7 +58,7 @@ fun MoreScreen(
 ) {
     val app by appDetailsViewModel.app.collectAsStateWithLifecycle()
     val dependencies by moreViewModel.dependentApps.collectAsStateWithLifecycle()
-    val translationState by moreViewModel.translationState.collectAsStateWithLifecycle()
+    val translationState by appDetailsViewModel.translationState.collectAsStateWithLifecycle()
 
     ScreenContent(
         app = app!!,
@@ -66,7 +66,7 @@ fun MoreScreen(
         translationState = translationState,
         onNavigateUp = onNavigateUp,
         onNavigateToAppDetails = onNavigateToAppDetails,
-        onToggleTranslation = { moreViewModel.toggleTranslation(app!!.description) }
+        onToggleTranslation = appDetailsViewModel::toggleTranslation
     )
 }
 
