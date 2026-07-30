@@ -32,18 +32,23 @@ import com.aurora.store.data.model.ExodusReport
 import com.aurora.store.data.model.PlexusReport
 import com.aurora.store.data.model.Report
 import com.aurora.store.data.model.Scores
+import com.aurora.store.data.model.TranslationState
 import com.aurora.store.data.providers.AuthProvider
+import com.aurora.store.data.providers.TranslationProvider
 import com.aurora.store.data.providers.WhitelistProvider
 import com.aurora.store.data.room.favourite.Favourite
 import com.aurora.store.data.room.favourite.FavouriteDao
 import com.aurora.store.util.CertUtil
 import com.aurora.store.util.PackageUtil
 import com.aurora.store.util.Preferences
+import com.aurora.store.util.Preferences.PREFERENCE_TRANSLATE_AUTO
 import com.aurora.store.util.Preferences.PREFERENCE_UPDATES_EXTENDED
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -70,7 +75,8 @@ class AppDetailsViewModel @Inject constructor(
     private val favouriteDao: FavouriteDao,
     private val httpClient: IHttpClient,
     private val json: Json,
-    private val whitelistProvider: WhitelistProvider
+    private val whitelistProvider: WhitelistProvider,
+    private val translationProvider: TranslationProvider
 ) : ViewModel() {
 
     private val _app = MutableStateFlow<App?>(null)
@@ -105,6 +111,21 @@ class AppDetailsViewModel @Inject constructor(
 
     private val _checkingApproval = MutableStateFlow(false)
     val checkingApproval = _checkingApproval.asStateFlow()
+
+    private val _translationState = MutableStateFlow<TranslationState>(TranslationState.Original)
+    val translationState = _translationState.asStateFlow()
+
+    /**
+     * A translation together with the language it was fetched for, so that a translation left
+     * over from a previous device language is refetched instead of being restored
+     */
+    private data class CachedTranslation(
+        val language: String,
+        val state: TranslationState.Translated
+    )
+
+    // Kept around so that toggling back and forth doesn't hit the network again
+    private var cachedTranslation: CachedTranslation? = null
 
     data class ApprovalRequest(
         val displayName: String,
@@ -145,6 +166,9 @@ class AppDetailsViewModel @Inject constructor(
 
     private val hasValidUpdate: Boolean
         get() = (isUpdatable && hasValidCerts) || (isUpdatable && isExtendedUpdateEnabled)
+
+    private val isAutoTranslateEnabled: Boolean
+        get() = Preferences.getBoolean(context, PREFERENCE_TRANSLATE_AUTO)
 
     /**
      * Resolves the state for an app that isn't mid-download/install. Not a plain property
@@ -198,6 +222,65 @@ class AppDetailsViewModel @Inject constructor(
             fetchSuggestions()
             fetchExodusPrivacyReport(packageName)
             if (app.value!!.requiresGMS()) fetchPlexusReport(packageName)
+            // Goes through the toggle so that an already fetched translation is reused
+            if (isAutoTranslateEnabled && translationState.value !is TranslationState.Translated) {
+                toggleTranslation()
+            }
+        }
+    }
+
+    /**
+     * Toggles between the original and the translated descriptions of the app, fetching the
+     * translation on the first request
+     */
+    fun toggleTranslation() {
+        when (_translationState.value) {
+            is TranslationState.InProgress -> return
+
+            is TranslationState.Translated -> {
+                _translationState.value = TranslationState.Original
+            }
+
+            else -> {
+                val cached = cachedTranslation
+                    ?.takeIf { it.language == translationProvider.targetLanguage }
+
+                if (cached != null) {
+                    _translationState.value = cached.state
+                } else {
+                    fetchTranslation()
+                }
+            }
+        }
+    }
+
+    private fun fetchTranslation() {
+        val currentApp = app.value ?: return
+        val language = translationProvider.targetLanguage
+
+        _translationState.value = TranslationState.InProgress
+        viewModelScope.launch(Dispatchers.IO) {
+            _translationState.value = try {
+                coroutineScope {
+                    val description = async {
+                        translationProvider.translate(currentApp.description, language)
+                    }
+                    val shortDescription = async {
+                        translationProvider.translate(currentApp.shortDescription, language)
+                    }
+
+                    TranslationState.Translated(
+                        description = description.await().text,
+                        shortDescription = shortDescription.await().text,
+                        sourceLanguage = description.await().sourceLanguage
+                    ).also {
+                        cachedTranslation = CachedTranslation(language = language, state = it)
+                    }
+                }
+            } catch (exception: Exception) {
+                Log.e(TAG, "Failed to translate descriptions", exception)
+                TranslationState.Failed
+            }
         }
     }
 

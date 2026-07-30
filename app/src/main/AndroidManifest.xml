@@ -117,6 +117,23 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Translates a text selection shared by other apps, opt-in via the settings -->
+        <activity
+            android:name=".TranslateTextActivity"
+            android:enabled="false"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/translate_title"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Translucent">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <!-- Notification Action (Download Complete) -->
         <activity
             android:name=".data.activity.InstallActivity"

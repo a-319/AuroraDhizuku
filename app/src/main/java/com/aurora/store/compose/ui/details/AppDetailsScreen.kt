@@ -82,6 +82,7 @@ import com.aurora.store.data.model.AppState
 import com.aurora.store.data.model.PermissionType
 import com.aurora.store.data.model.Report
 import com.aurora.store.data.model.Scores
+import com.aurora.store.data.model.TranslationState
 import com.aurora.store.data.providers.PermissionProvider.Companion.isPermittedToInstall
 import com.aurora.store.util.FlavouredUtil
 import com.aurora.store.util.ManagedConfigurations
@@ -114,6 +115,7 @@ fun AppDetailsScreen(
     val plexusScores by viewModel.plexusScores.collectAsStateWithLifecycle()
     val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
     val checkingApproval by viewModel.checkingApproval.collectAsStateWithLifecycle()
+    val translationState by viewModel.translationState.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = packageName) { viewModel.fetchAppDetails(packageName) }
 
@@ -150,6 +152,7 @@ fun AppDetailsScreen(
                 exodusReport = exodusReport,
                 hideScreenshotsSection = hideScreenshotsSection,
                 checkingApproval = checkingApproval,
+                translationState = translationState,
                 onNavigateUp = onNavigateUp,
                 onNavigateToAppDetails = onNavigateToAppDetails,
                 onDownload = { requestedApp -> viewModel.enqueueDownload(requestedApp) },
@@ -219,6 +222,7 @@ private fun ScreenContentApp(
     exodusReport: Report? = null,
     hideScreenshotsSection: Boolean = false,
     checkingApproval: Boolean = false,
+    translationState: TranslationState = TranslationState.Original,
     onNavigateUp: () -> Unit = {},
     onNavigateToAppDetails: (packageName: String) -> Unit = {},
     onDownload: (requestedApp: App) -> Unit = {},
@@ -393,7 +397,10 @@ private fun ScreenContentApp(
                 Changelog(changelog = app.changes)
                 Header(
                     title = stringResource(R.string.details_more_about_app),
-                    subtitle = app.shortDescription,
+                    subtitle = when (translationState) {
+                        is TranslationState.Translated -> translationState.shortDescription
+                        else -> app.shortDescription
+                    },
                     onClick = { showExtraPane(ExtraScreen.More) }
                 )
 

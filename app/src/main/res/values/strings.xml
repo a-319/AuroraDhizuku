@@ -56,6 +56,7 @@
     <string name="action_clear">"Clear"</string>
     <string name="action_close">"Close"</string>
     <string name="action_copy">"Copy"</string>
+    <string name="action_retry">"Retry"</string>
     <string name="action_copy_link">"Copy link"</string>
     <string name="action_disable">"Disable"</string>
     <string name="action_export">"Export"</string>
@@ -113,6 +114,10 @@
     <string name="details_contains_ads">"Contains ads"</string>
     <string name="details_dependencies">"Dependencies"</string>
     <string name="details_description">"Description"</string>
+    <string name="details_description_translate">"Translate"</string>
+    <string name="details_description_translating">"Translating…"</string>
+    <string name="details_description_original">"See original"</string>
+    <string name="details_description_translate_failed">"Couldn\'t translate the description"</string>
     <string name="details_dev_address">"Address"</string>
     <string name="details_dev_details">"Developer contact"</string>
     <string name="details_dev_email">"Email"</string>
@@ -224,6 +229,10 @@
     <string name="pref_ui_title">"Customization"</string>
     <string name="pref_ui_no_for_you">"For you pages"</string>
     <string name="pref_ui_no_for_you_desc">"Display For you pages on home screen"</string>
+    <string name="pref_ui_translate_auto">"Translate descriptions automatically"</string>
+    <string name="pref_ui_translate_auto_desc">"Translate app descriptions into your language as soon as an app is opened"</string>
+    <string name="pref_ui_translate_selection">"Translate selected text"</string>
+    <string name="pref_ui_translate_selection_desc">"Offer Translate when text is selected in other apps"</string>
     <string name="pref_ui_similar_apps">"Similar and related apps"</string>
     <string name="pref_updates_incompatible">Show updates that may fail</string>
     <string name="pref_updates_incompatible_desc">Display updates for incompatible or disabled apps that may fail to install</string>
@@ -568,4 +577,9 @@
     <string name="error_not_whitelisted">Installation blocked: this app is not in the allowed apps list set by your administrator.</string>
     <string name="request_approval_share_text">Please approve installing %1$s (package: %2$s) and add it to the approved apps list.</string>
     <string name="request_approval_share_list_url">The approved apps list is at: %1$s</string>
+    <string name="translate_title">Translate</string>
+    <string name="translate_provider">Translated by Google</string>
+    <string name="translate_source_language">Translated from %1$s by Google</string>
+    <string name="translate_original">Original</string>
+    <string name="translate_failed">Couldn\'t translate the text</string>
 </resources>

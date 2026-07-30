@@ -120,6 +120,10 @@
     <string name="action_finish">סיום</string>
     <string name="action_granted">הוענקה</string>
     <string name="details_description">תיאור</string>
+    <string name="details_description_translate">תרגום</string>
+    <string name="details_description_translating">מתרגם…</string>
+    <string name="details_description_original">הצגת המקור</string>
+    <string name="details_description_translate_failed">לא ניתן לתרגם את התיאור</string>
     <string name="details_free">בחינם</string>
     <string name="menu_disclaimer">כתב ויתור</string>
     <string name="tab_for_you">בשבילך</string>
@@ -208,6 +212,10 @@
     <string name="pref_install_mode_session">מתקין מערכת</string>
     <string name="pref_ui_layout_tab">בחר עמוד ברירת מחדל</string>
     <string name="pref_ui_no_for_you_desc">הצגת עמודים בשבילך במסך הבית</string>
+    <string name="pref_ui_translate_auto">תרגום תיאורים אוטומטית</string>
+    <string name="pref_ui_translate_auto_desc">תרגום תיאורי יישומים לשפה שלך מיד עם פתיחת היישום</string>
+    <string name="pref_ui_translate_selection">תרגום טקסט מסומן</string>
+    <string name="pref_ui_translate_selection_desc">הצעת תרגום כאשר מסומן טקסט ביישומים אחרים</string>
     <string name="title_spoof_manager">מנהל הזיוף</string>
     <string name="details_beta_description">אתה תראה תכונות חדשות ובאגים לפני כולם. תן משוב למפתחים כדי לעזור להם להשתפר.</string>
     <string name="device_miui_extra">אפשרי לבחור מתקין נתיב, אבל לא תוכל להתקין התקנות מאוחדות (מפוצלות - split), אז הבחירה בידך.</string>
@@ -448,4 +456,10 @@
     <string name="error_not_whitelisted">ההתקנה נחסמה: אפליקציה זו אינה נמצאת ברשימת האפליקציות המאושרות שהוגדרה על ידי מנהל המערכת.</string>
     <string name="request_approval_share_text">בבקשה לאשר את התקנת האפליקציה %1$s (חבילה: %2$s) ולהוסיף אותה לרשימת האפליקציות המאושרות.</string>
     <string name="request_approval_share_list_url">רשימת האפליקציות המאושרות נמצאת בכתובת: %1$s</string>
+    <string name="action_retry">ניסיון חוזר</string>
+    <string name="translate_title">תרגום</string>
+    <string name="translate_provider">תורגם על ידי Google</string>
+    <string name="translate_source_language">תורגם מ%1$s על ידי Google</string>
+    <string name="translate_original">מקור</string>
+    <string name="translate_failed">לא ניתן לתרגם את הטקסט</string>
 </resources>
