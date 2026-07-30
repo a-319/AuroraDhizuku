@@ -105,7 +105,7 @@ private fun TranslateAction(translationState: TranslationState, onToggleTranslat
         when (translationState) {
             is TranslationState.Translated -> {
                 Text(
-                    text = stringResource(R.string.details_description_translated),
+                    text = stringResource(R.string.translate_provider),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

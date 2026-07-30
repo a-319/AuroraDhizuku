@@ -13,6 +13,33 @@ package com.aurora.store.data.model
 data class Translation(val text: String, val sourceLanguage: String? = null)
 
 /**
+ * State of the translation of a standalone piece of text, such as a selection handed over by
+ * another app
+ */
+sealed interface TextTranslationState {
+
+    /**
+     * The translation is being fetched
+     */
+    data object InProgress : TextTranslationState
+
+    /**
+     * The text has been translated
+     * @param text The translated text
+     * @param sourceLanguage ISO 639 code of the language the text was translated from
+     */
+    data class Translated(
+        val text: String,
+        val sourceLanguage: String? = null
+    ) : TextTranslationState
+
+    /**
+     * The translation could not be fetched
+     */
+    data object Failed : TextTranslationState
+}
+
+/**
  * State of the translation of an app's descriptions
  */
 sealed interface TranslationState {

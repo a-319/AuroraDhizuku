@@ -123,7 +123,6 @@
     <string name="details_description_translate">תרגום</string>
     <string name="details_description_translating">מתרגם…</string>
     <string name="details_description_original">הצגת המקור</string>
-    <string name="details_description_translated">תורגם על ידי Google</string>
     <string name="details_description_translate_failed">לא ניתן לתרגם את התיאור</string>
     <string name="details_free">בחינם</string>
     <string name="menu_disclaimer">כתב ויתור</string>
@@ -455,4 +454,10 @@
     <string name="error_not_whitelisted">ההתקנה נחסמה: אפליקציה זו אינה נמצאת ברשימת האפליקציות המאושרות שהוגדרה על ידי מנהל המערכת.</string>
     <string name="request_approval_share_text">בבקשה לאשר את התקנת האפליקציה %1$s (חבילה: %2$s) ולהוסיף אותה לרשימת האפליקציות המאושרות.</string>
     <string name="request_approval_share_list_url">רשימת האפליקציות המאושרות נמצאת בכתובת: %1$s</string>
+    <string name="action_retry">ניסיון חוזר</string>
+    <string name="translate_title">תרגום</string>
+    <string name="translate_provider">תורגם על ידי Google</string>
+    <string name="translate_source_language">תורגם מ%1$s על ידי Google</string>
+    <string name="translate_original">מקור</string>
+    <string name="translate_failed">לא ניתן לתרגם את הטקסט</string>
 </resources>
