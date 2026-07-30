@@ -115,8 +115,17 @@ class AppDetailsViewModel @Inject constructor(
     private val _translationState = MutableStateFlow<TranslationState>(TranslationState.Original)
     val translationState = _translationState.asStateFlow()
 
+    /**
+     * A translation together with the language it was fetched for, so that a translation left
+     * over from a previous device language is refetched instead of being restored
+     */
+    private data class CachedTranslation(
+        val language: String,
+        val state: TranslationState.Translated
+    )
+
     // Kept around so that toggling back and forth doesn't hit the network again
-    private var translation: TranslationState.Translated? = null
+    private var cachedTranslation: CachedTranslation? = null
 
     data class ApprovalRequest(
         val displayName: String,
@@ -233,9 +242,11 @@ class AppDetailsViewModel @Inject constructor(
             }
 
             else -> {
-                val cachedTranslation = translation
-                if (cachedTranslation != null) {
-                    _translationState.value = cachedTranslation
+                val cached = cachedTranslation
+                    ?.takeIf { it.language == translationProvider.targetLanguage }
+
+                if (cached != null) {
+                    _translationState.value = cached.state
                 } else {
                     fetchTranslation()
                 }
@@ -245,23 +256,26 @@ class AppDetailsViewModel @Inject constructor(
 
     private fun fetchTranslation() {
         val currentApp = app.value ?: return
+        val language = translationProvider.targetLanguage
 
         _translationState.value = TranslationState.InProgress
         viewModelScope.launch(Dispatchers.IO) {
             _translationState.value = try {
                 coroutineScope {
                     val description = async {
-                        translationProvider.translate(currentApp.description)
+                        translationProvider.translate(currentApp.description, language)
                     }
                     val shortDescription = async {
-                        translationProvider.translate(currentApp.shortDescription)
+                        translationProvider.translate(currentApp.shortDescription, language)
                     }
 
                     TranslationState.Translated(
                         description = description.await().text,
                         shortDescription = shortDescription.await().text,
                         sourceLanguage = description.await().sourceLanguage
-                    ).also { translation = it }
+                    ).also {
+                        cachedTranslation = CachedTranslation(language = language, state = it)
+                    }
                 }
             } catch (exception: Exception) {
                 Log.e(TAG, "Failed to translate descriptions", exception)

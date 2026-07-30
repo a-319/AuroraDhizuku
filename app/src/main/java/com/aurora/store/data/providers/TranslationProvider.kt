@@ -34,7 +34,47 @@ class TranslationProvider @Inject constructor(private val httpClient: HttpClient
         private const val MAX_BATCH_LENGTH = 4500
 
         private const val AUTO_DETECT = "auto"
+
+        private const val PORTUGUESE = "pt"
+        private const val PORTUGUESE_BRAZIL = "pt-BR"
+        private const val PORTUGUESE_PORTUGAL = "pt-PT"
+        private const val REGION_BRAZIL = "BR"
+        private const val REGION_PORTUGAL = "PT"
+
+        private const val CHINESE_SIMPLIFIED = "zh-CN"
+        private const val CHINESE_TRADITIONAL = "zh-TW"
+        private const val SCRIPT_CHINESE_TRADITIONAL = "Hant"
+        private val REGIONS_CHINESE_TRADITIONAL = setOf("HK", "MO", "TW")
     }
+
+    /**
+     * Language the texts are translated into, which is the language of the device.
+     *
+     * Chinese and Portuguese are the only two languages the endpoint answers differently
+     * depending on the region, and for both of them the plain language code yields one specific
+     * variant: `zh` is Simplified Chinese and `pt` is Brazilian Portuguese. Those two are
+     * therefore spelled out with their region, while every other language is requested by its
+     * plain code, because a region the endpoint does not know about is answered with the
+     * untranslated text rather than with an error.
+     */
+    val targetLanguage: String
+        get() = with(Locale.getDefault()) {
+            when (language) {
+                Locale.CHINESE.language -> when {
+                    script == SCRIPT_CHINESE_TRADITIONAL -> CHINESE_TRADITIONAL
+                    country in REGIONS_CHINESE_TRADITIONAL -> CHINESE_TRADITIONAL
+                    else -> CHINESE_SIMPLIFIED
+                }
+
+                PORTUGUESE -> when (country) {
+                    REGION_PORTUGAL -> PORTUGUESE_PORTUGAL
+                    REGION_BRAZIL -> PORTUGUESE_BRAZIL
+                    else -> language
+                }
+
+                else -> language
+            }
+        }
 
     /**
      * Translates the given text into the requested language.
@@ -42,14 +82,11 @@ class TranslationProvider @Inject constructor(private val httpClient: HttpClient
      * HTML markup is not translatable, so it is stripped and the result is plain text with the
      * paragraphs of the original preserved.
      * @param text Text to translate, may contain the HTML markup served by Google Play
-     * @param targetLanguage ISO 639 code of the language to translate the text into
+     * @param targetLanguage Language to translate the text into, see [targetLanguage]
      * @return The [Translation] of the given text
      */
     @Throws(IOException::class)
-    fun translate(
-        text: String,
-        targetLanguage: String = Locale.getDefault().language
-    ): Translation {
+    fun translate(text: String, targetLanguage: String): Translation {
         val plainText = text.toPlainText()
         if (plainText.isBlank()) return Translation(text = plainText)
 

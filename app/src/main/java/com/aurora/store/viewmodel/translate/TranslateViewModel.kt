@@ -38,7 +38,10 @@ class TranslateViewModel @Inject constructor(
         _state.value = TextTranslationState.InProgress
         viewModelScope.launch(Dispatchers.IO) {
             _state.value = try {
-                val translation = translationProvider.translate(text)
+                val translation = translationProvider.translate(
+                    text = text,
+                    targetLanguage = translationProvider.targetLanguage
+                )
                 TextTranslationState.Translated(
                     text = translation.text,
                     sourceLanguage = translation.sourceLanguage
