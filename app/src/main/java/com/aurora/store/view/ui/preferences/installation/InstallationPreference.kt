@@ -19,12 +19,10 @@
 
 package com.aurora.store.view.ui.preferences.installation
 
-import android.app.admin.DevicePolicyManager
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.getSystemService
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -32,7 +30,9 @@ import com.aurora.extensions.navigate
 import com.aurora.extensions.showDialog
 import com.aurora.store.R
 import com.aurora.store.compose.navigation.Screen
+import com.aurora.store.util.DeviceOwnerManager
 import com.aurora.store.util.Preferences.PREFERENCE_INSTALLATION_DEVICE_OWNER
+import com.aurora.store.util.Preferences.PREFERENCE_INSTALLATION_DEVICE_OWNER_MANAGE
 import com.aurora.store.util.Preferences.PREFERENCE_INSTALLER_ID
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -49,18 +49,25 @@ class InstallationPreference : PreferenceFragmentCompat() {
             }
         }
 
-        findPreference<Preference>(PREFERENCE_INSTALLATION_DEVICE_OWNER)?.apply {
-            val packageName = context.packageName
-            val devicePolicyManager = context.getSystemService<DevicePolicyManager>()
+        findPreference<Preference>(PREFERENCE_INSTALLATION_DEVICE_OWNER_MANAGE)?.apply {
+            setOnPreferenceClickListener {
+                requireContext().navigate(Screen.DeviceOwner)
+                true
+            }
+        }
 
-            isVisible = devicePolicyManager?.isDeviceOwnerApp(packageName) ?: false
+        findPreference<Preference>(PREFERENCE_INSTALLATION_DEVICE_OWNER)?.apply {
+            // Ownership received in the protected mode can only be handed back, never given up
+            isVisible = DeviceOwnerManager.isDeviceOwner(context) &&
+                DeviceOwnerManager.canReleaseOwnership(context)
+
             setOnPreferenceClickListener {
                 context.showDialog(
                     context.getString(R.string.pref_clear_device_owner_title),
                     context.getString(R.string.pref_clear_device_owner_desc),
                     { _: DialogInterface, _: Int ->
-                        @Suppress("DEPRECATION")
-                        devicePolicyManager!!.clearDeviceOwnerApp(packageName)
+                        // Drops every policy we enforce before giving up the ownership
+                        DeviceOwnerManager.releaseOwnership(context)
                         activity?.recreate()
                     },
                     { dialog: DialogInterface, _: Int -> dialog.dismiss() }

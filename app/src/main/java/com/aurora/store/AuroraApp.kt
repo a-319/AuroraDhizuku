@@ -39,13 +39,16 @@ import com.aurora.store.data.helper.DownloadHelper
 import com.aurora.store.data.helper.UpdateHelper
 import com.aurora.store.data.receiver.PackageManagerReceiver
 import com.aurora.store.util.CommonUtil
+import com.aurora.store.util.DeviceOwnerManager
 import com.aurora.store.util.NotificationUtil
 import com.aurora.store.util.PackageUtil
 import com.aurora.store.util.Preferences
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 
@@ -107,6 +110,12 @@ class AuroraApp : Application(), Configuration.Provider, SingletonImageLoader.Fa
         )
 
         CommonUtil.cleanupInstallationSessions(applicationContext)
+
+        // Remember who holds the device owner permission, apps handing it over to us stay
+        // anonymous and we need to know which app to protect once we receive it
+        scope.launch(Dispatchers.IO) {
+            DeviceOwnerManager.cacheCurrentOwner(applicationContext)
+        }
     }
 
     override fun newImageLoader(context: Context): ImageLoader = ImageLoader(this).newBuilder()
