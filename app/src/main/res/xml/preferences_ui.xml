@@ -57,4 +57,12 @@
         app:singleLineTitle="false"
         app:summary="@string/pref_ui_translate_auto_desc"
         app:title="@string/pref_ui_translate_auto" />
+
+    <SwitchPreferenceCompat
+        app:defaultValue="false"
+        app:iconSpaceReserved="false"
+        app:key="PREFERENCE_TRANSLATE_SELECTION"
+        app:singleLineTitle="false"
+        app:summary="@string/pref_ui_translate_selection_desc"
+        app:title="@string/pref_ui_translate_selection" />
 </androidx.preference.PreferenceScreen>

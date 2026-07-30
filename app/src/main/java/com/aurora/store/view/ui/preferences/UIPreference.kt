@@ -27,8 +27,11 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.net.toUri
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
+import androidx.preference.SwitchPreferenceCompat
 import com.aurora.extensions.isTAndAbove
 import com.aurora.store.R
+import com.aurora.store.TranslateTextActivity
+import com.aurora.store.util.Preferences.PREFERENCE_TRANSLATE_SELECTION
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 
@@ -51,6 +54,20 @@ class UIPreference : BasePreferenceFragment() {
                 }
             } else {
                 isVisible = false
+            }
+        }
+
+        findPreference<SwitchPreferenceCompat>(PREFERENCE_TRANSLATE_SELECTION)?.apply {
+            // The component state can outlive the preference, for example after a restore onto
+            // another device, so bring it back in line whenever this screen is opened
+            TranslateTextActivity.setSelectionActionEnabled(requireContext(), isChecked)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                TranslateTextActivity.setSelectionActionEnabled(
+                    context = requireContext(),
+                    enabled = newValue as Boolean
+                )
+                true
             }
         }
     }

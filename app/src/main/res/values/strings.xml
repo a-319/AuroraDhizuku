@@ -231,6 +231,8 @@
     <string name="pref_ui_no_for_you_desc">"Display For you pages on home screen"</string>
     <string name="pref_ui_translate_auto">"Translate descriptions automatically"</string>
     <string name="pref_ui_translate_auto_desc">"Translate app descriptions into your language as soon as an app is opened"</string>
+    <string name="pref_ui_translate_selection">"Translate selected text"</string>
+    <string name="pref_ui_translate_selection_desc">"Offer Translate when text is selected in other apps"</string>
     <string name="pref_ui_similar_apps">"Similar and related apps"</string>
     <string name="pref_updates_incompatible">Show updates that may fail</string>
     <string name="pref_updates_incompatible_desc">Display updates for incompatible or disabled apps that may fail to install</string>

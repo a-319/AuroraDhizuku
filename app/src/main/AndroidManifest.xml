@@ -117,9 +117,10 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Translates a text selection shared by other apps -->
+        <!-- Translates a text selection shared by other apps, opt-in via the settings -->
         <activity
             android:name=".TranslateTextActivity"
+            android:enabled="false"
             android:excludeFromRecents="true"
             android:exported="true"
             android:label="@string/translate_title"
