@@ -51,10 +51,28 @@ class TranslateTextActivity : ComponentActivity() {
         val text = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
         if (text.isNullOrBlank()) return finish()
 
+        // Apps handing over a text they can put the translation back into ask for it by declaring
+        // the text editable, which is how they get to show the translation themselves
+        val readOnly = intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
+
         setContent {
             AuroraTheme {
-                TranslateScreen(text = text, onDismiss = ::finish)
+                TranslateScreen(
+                    text = text,
+                    canReturnTranslation = !readOnly,
+                    onReturnTranslation = ::returnTranslation,
+                    onDismiss = ::finish
+                )
             }
         }
+    }
+
+    /**
+     * Hands the translation back to the app the text came from, which then shows it in place of
+     * the original text
+     */
+    private fun returnTranslation(text: String) {
+        setResult(RESULT_OK, Intent().putExtra(Intent.EXTRA_PROCESS_TEXT, text))
+        finish()
     }
 }
